@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 import { Button } from "@/components/ui/Button";
+import { UserMenu } from "@/components/UserMenu";
 
 export default function Home() {
   const router = useRouter();
@@ -14,6 +15,11 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[var(--color-canvas)] bg-dot-pattern flex flex-col items-center justify-center p-8">
+      {/* User Menu - Top Right */}
+      <div className="absolute top-6 right-6">
+        <UserMenu />
+      </div>
+
       {/* Hero Section */}
       <div className="max-w-2xl text-center">
         {/* Logo/Title */}
@@ -42,7 +48,6 @@ export default function Home() {
                 px-4 py-2 text-sm font-medium
                 border-2 border-[var(--color-ink)]
                 shadow-[2px_2px_0px_0px_#000000]
-                bg-[var(--color-pop-${feature.color})]
                 ${feature.color === "blue" || feature.color === "pink" ? "text-white" : "text-[var(--color-ink)]"}
               `}
               style={{
