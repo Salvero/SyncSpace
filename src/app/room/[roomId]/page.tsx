@@ -46,7 +46,7 @@ function CollaborativeCanvas({ roomId }: { roomId: string }) {
             {/* Header with Logo */}
             <div className="absolute top-4 left-4 z-50">
                 <a href="/" className="block hover:opacity-80 transition-opacity">
-                    <Logo size="md" showText={true} />
+                    <Logo size="lg" showText={true} />
                 </a>
             </div>
 
@@ -57,8 +57,8 @@ function CollaborativeCanvas({ roomId }: { roomId: string }) {
                 othersCount={othersCount}
             />
 
-            {/* Room ID indicator */}
-            <div className="absolute top-16 left-4 z-50 flex items-center gap-2">
+            {/* Room ID indicator - positioned below logo */}
+            <div className="absolute top-24 left-4 z-50 flex items-center gap-2">
                 <span className="text-xs font-mono text-[var(--color-ink)]/50">
                     Room:
                 </span>
