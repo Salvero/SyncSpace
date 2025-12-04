@@ -43,12 +43,14 @@ export default function SyncedBoard() {
     const [isGenerating, setIsGenerating] = useState(false);
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
-    // Convert synced edges to React Flow format
+    // Convert synced edges to React Flow format with mind-map styling
     const flowEdges: Edge[] = useMemo(() => {
         return syncedEdges.map((edge) => ({
             id: edge.id,
             source: edge.source,
             target: edge.target,
+            type: "smoothstep",
+            animated: true,
             style: { stroke: "#111111", strokeWidth: 2 },
         }));
     }, [syncedEdges]);
@@ -333,12 +335,22 @@ export default function SyncedBoard() {
                 </div>
             </div>
 
-            {/* Loading overlay when generating */}
+            {/* Brainstorming overlay when generating */}
             {isGenerating && (
-                <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-40">
-                    <div className="flex flex-col items-center gap-3 px-6 py-4 bg-[var(--color-canvas)] border-2 border-[var(--color-ink)] shadow-[4px_4px_0px_0px_#000000]">
-                        <div className="w-8 h-8 border-4 border-[var(--color-ink)] border-t-transparent animate-spin" />
-                        <span className="font-display text-sm">AI is thinking...</span>
+                <div className="absolute inset-0 flex items-center justify-center z-50 bg-black/20">
+                    <div className="flex flex-col items-center gap-4 px-10 py-8 bg-[var(--color-pop-pink)] border-4 border-[var(--color-ink)] shadow-[8px_8px_0px_0px_#000000] animate-pulse">
+                        <svg
+                            width="48"
+                            height="48"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            stroke="white"
+                            strokeWidth="1.5"
+                            className="animate-spin"
+                        >
+                            <path d="M8 2L9.09 5.26L12.5 5.27L9.73 7.27L10.82 10.53L8 8.53L5.18 10.53L6.27 7.27L3.5 5.27L6.91 5.26L8 2Z" />
+                        </svg>
+                        <span className="font-display text-2xl text-white">Brainstorming...</span>
                     </div>
                 </div>
             )}

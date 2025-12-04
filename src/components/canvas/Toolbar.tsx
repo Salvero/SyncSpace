@@ -37,8 +37,16 @@ const RedoIcon = () => (
     </svg>
 );
 
-const MagicIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+const MagicIcon = ({ spinning = false }: { spinning?: boolean }) => (
+    <svg
+        width="16"
+        height="16"
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        className={spinning ? "animate-spin" : ""}
+    >
         <path d="M8 2L9.09 5.26L12.5 5.27L9.73 7.27L10.82 10.53L8 8.53L5.18 10.53L6.27 7.27L3.5 5.27L6.91 5.26L8 2Z" />
     </svg>
 );
@@ -123,12 +131,11 @@ export const Toolbar = memo(function Toolbar({
                 disabled={!selectedNodeId || isGenerating}
                 aria-label="AI Magic - Generate related ideas"
                 title="Magic (M)"
-            >
-                {isGenerating ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent animate-spin" />
-                ) : (
-                    <MagicIcon />
+                className={cn(
+                    isGenerating && "cursor-wait animate-pulse"
                 )}
+            >
+                <MagicIcon spinning={isGenerating} />
                 <span className="hidden sm:inline">{isGenerating ? "Thinking..." : "Magic"}</span>
             </Button>
 
