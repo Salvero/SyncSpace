@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRoom } from "@/lib/liveblocks.config";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import * as Y from "yjs";
@@ -23,32 +23,65 @@ interface YEdgeData {
     target: string;
 }
 
+export type ConnectionStatus = "connecting" | "connected" | "reconnecting" | "disconnected";
+
 export function useSyncedCanvas() {
     const room = useRoom();
     const [doc, setDoc] = useState<Y.Doc | null>(null);
-    const [provider, setProvider] = useState<LiveblocksYjsProvider | null>(null);
     const [notes, setNotes] = useState<NanoNoteNode[]>([]);
     const [edges, setEdges] = useState<YEdgeData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSynced, setIsSynced] = useState(false);
+    const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("connecting");
+
+    // Ref to prevent double initialization in React Strict Mode
+    const providerRef = useRef<LiveblocksYjsProvider | null>(null);
+    const docRef = useRef<Y.Doc | null>(null);
+    const initializingRef = useRef(false);
 
     // Initialize Y.js document and provider
     useEffect(() => {
+        // Prevent double initialization in Strict Mode
+        if (providerRef.current || initializingRef.current) return;
+        initializingRef.current = true;
+
         const yDoc = new Y.Doc();
         const yProvider = new LiveblocksYjsProvider(room, yDoc);
 
+        docRef.current = yDoc;
+        providerRef.current = yProvider;
         setDoc(yDoc);
-        setProvider(yProvider);
 
         // Wait for sync
         yProvider.on("sync", (synced: boolean) => {
             setIsSynced(synced);
             setIsLoading(!synced);
+            if (synced) {
+                setConnectionStatus("connected");
+            }
+        });
+
+        // Handle connection status changes
+        yProvider.on("status", ({ status }: { status: string }) => {
+            setConnectionStatus((prev) => {
+                if (status === "connected") {
+                    return "connected";
+                } else if (status === "connecting") {
+                    return prev === "connected" ? "reconnecting" : "connecting";
+                } else if (status === "disconnected") {
+                    return "disconnected";
+                }
+                return prev;
+            });
         });
 
         return () => {
+            // Only cleanup on actual unmount
             yProvider.destroy();
             yDoc.destroy();
+            providerRef.current = null;
+            docRef.current = null;
+            initializingRef.current = false;
         };
     }, [room]);
 
@@ -227,6 +260,7 @@ export function useSyncedCanvas() {
         edges,
         isLoading,
         isSynced,
+        connectionStatus,
         addNote,
         updateNoteContent,
         updateNoteColor,
