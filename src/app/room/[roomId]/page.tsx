@@ -57,14 +57,16 @@ function CollaborativeCanvas({ roomId }: { roomId: string }) {
                 othersCount={othersCount}
             />
 
-            {/* Room ID indicator - positioned below logo */}
-            <div className="absolute top-24 left-4 z-50 flex items-center gap-2">
-                <span className="text-xs font-mono text-[var(--color-ink)]/50">
-                    Room:
-                </span>
-                <span className="px-2 py-1 text-xs font-mono bg-[var(--color-ink)]/5 border border-[var(--color-ink)]/20">
-                    {roomId.slice(0, 8)}...
-                </span>
+            {/* Room ID indicator - positioned on right side */}
+            <div className="absolute top-16 right-4 z-50">
+                <div className="flex flex-col items-end gap-1 px-4 py-2 bg-[var(--color-canvas)] border-2 border-[var(--color-ink)] shadow-[3px_3px_0px_0px_#000000]">
+                    <span className="text-xs font-medium text-[var(--color-ink)]/60 uppercase tracking-wide">
+                        Room ID
+                    </span>
+                    <span className="text-base font-mono font-bold text-[var(--color-ink)]">
+                        {roomId.slice(0, 8)}
+                    </span>
+                </div>
             </div>
 
             {/* Back to home button */}
