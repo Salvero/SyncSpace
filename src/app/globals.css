@@ -143,9 +143,17 @@ body {
   cursor: grab;
 }
 
-/* Ensure smooth dragging without any transform transitions */
+/* Remove will-change to prevent blurry text rendering */
 .react-flow__node.draggable {
-  will-change: transform;
+  /* Use transform3d for GPU acceleration without will-change */
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure crisp text rendering in notes */
+.react-flow__node * {
+  text-rendering: optimizeLegibility;
 }
 
 .react-flow__pane {
