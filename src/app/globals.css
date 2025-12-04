@@ -228,3 +228,16 @@ body {
 .animate-shake {
   animation: shake 200ms ease-in-out;
 }
+
+/* ========================================
+   NEXT.JS DEV TOOLS INDICATOR OVERRIDE
+   Move to top-right corner (out of the way)
+======================================== */
+
+div#devtools-indicator.nextjs-toast[data-nextjs-toast="true"] {
+  bottom: auto !important;
+  left: auto !important;
+  top: 16px !important;
+  right: 16px !important;
+  inset: 16px 16px auto auto !important;
+}
