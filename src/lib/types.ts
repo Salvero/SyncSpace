@@ -1,3 +1,6 @@
+// Pop colors used throughout the app
+export type PopColor = "yellow" | "blue" | "pink";
+
 // NanoNote type - the core data structure for canvas notes
 export interface NanoNote {
     id: string;
@@ -6,7 +9,7 @@ export interface NanoNote {
     y: number;
     width?: number;
     height?: number;
-    color: "yellow" | "blue" | "pink";
+    color: PopColor;
     author_id?: string;
     created_at?: string;
 }
@@ -24,7 +27,7 @@ export interface Room {
 export interface CursorPresence {
     cursor: { x: number; y: number } | null;
     name: string;
-    color: "yellow" | "blue" | "pink";
+    color: PopColor;
 }
 
 // React Flow Node type extending NanoNote
@@ -34,9 +37,10 @@ export interface NanoNoteNode {
     position: { x: number; y: number };
     data: {
         content: string;
-        color: "yellow" | "blue" | "pink";
+        color: PopColor;
+        createdAt?: string;
         onContentChange?: (id: string, content: string) => void;
-        onColorChange?: (id: string, color: "yellow" | "blue" | "pink") => void;
+        onColorChange?: (id: string, color: PopColor) => void;
         onDelete?: (id: string) => void;
     };
     width?: number;

@@ -5,8 +5,8 @@ import dynamic from "next/dynamic";
 import { Room, useCursorPresence } from "@/components/Room";
 import { CursorsOverlay, PresenceIndicator } from "@/components/canvas/Cursor";
 
-// Dynamically import Board to avoid SSR issues with React Flow
-const Board = dynamic(() => import("@/components/canvas/Board"), {
+// Dynamically import SyncedBoard to avoid SSR issues with React Flow
+const SyncedBoard = dynamic(() => import("@/components/canvas/SyncedBoard"), {
     ssr: false,
     loading: () => (
         <div className="w-full h-screen flex items-center justify-center bg-[var(--color-canvas)] bg-dot-pattern">
@@ -71,8 +71,8 @@ function CollaborativeCanvas({ roomId }: { roomId: string }) {
             {/* Other users' cursors */}
             <CursorsOverlay cursors={otherCursors} />
 
-            {/* Canvas */}
-            <Board roomId={roomId} />
+            {/* Synced Canvas with Y.js */}
+            <SyncedBoard />
         </div>
     );
 }
