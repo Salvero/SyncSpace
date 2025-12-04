@@ -1,0 +1,230 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import "tailwindcss";
+
+/* ========================================
+   NANO BANANA DESIGN SYSTEM
+   High Contrast, Brutalist-Pop, Ultra-Fast
+======================================== */
+
+:root {
+  /* Core Colors */
+  --color-canvas: #FFFFFF;
+  --color-ink: #111111;
+
+  /* Pop Colors */
+  --color-pop-yellow: #FFE600;
+  --color-pop-blue: #3B82F6;
+  --color-pop-pink: #EC4899;
+
+  /* Hard Design Tokens */
+  --shadow-hard: 4px 4px 0px 0px #000000;
+  --shadow-hard-sm: 2px 2px 0px 0px #000000;
+  --border-hard: 2px solid #000000;
+
+  /* Typography */
+  --font-ui: 'Inter', sans-serif;
+  --font-display: 'Space Grotesk', sans-serif;
+
+  /* Transitions - FAST (100ms max per spec) */
+  --transition-instant: 100ms ease-out;
+}
+
+@theme inline {
+  --color-canvas: var(--color-canvas);
+  --color-ink: var(--color-ink);
+  --color-pop-yellow: var(--color-pop-yellow);
+  --color-pop-blue: var(--color-pop-blue);
+  --color-pop-pink: var(--color-pop-pink);
+  --shadow-hard: var(--shadow-hard);
+  --shadow-hard-sm: var(--shadow-hard-sm);
+  --font-ui: var(--font-ui);
+  --font-display: var(--font-display);
+}
+
+/* ========================================
+   BASE STYLES
+======================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-ui);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Display Text - Uppercase Space Grotesk */
+.font-display {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-weight: 600;
+}
+
+/* ========================================
+   DOT PATTERN GRID BACKGROUND
+======================================== */
+
+.bg-dot-pattern {
+  background-image: radial-gradient(circle, #00000015 1.5px, transparent 1.5px);
+  background-size: 24px 24px;
+}
+
+/* ========================================
+   HARD SHADOW UTILITIES
+======================================== */
+
+.shadow-hard {
+  box-shadow: var(--shadow-hard);
+}
+
+.shadow-hard-sm {
+  box-shadow: var(--shadow-hard-sm);
+}
+
+/* Hover: lift effect (shadow stays, element moves) */
+.shadow-hard-hover:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px 0px #000000;
+}
+
+.shadow-hard-hover:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px 0px #000000;
+}
+
+/* ========================================
+   BORDER UTILITIES
+======================================== */
+
+.border-hard {
+  border: var(--border-hard);
+}
+
+/* ========================================
+   FOCUS STATES - HIGH CONTRAST (Accessibility)
+======================================== */
+
+.focus-hard:focus {
+  outline: 3px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+.focus-hard:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.focus-hard:focus-visible {
+  outline: 3px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+/* ========================================
+   REACT FLOW OVERRIDES
+======================================== */
+
+.react-flow__node {
+  transition: none !important;
+  /* No sluggish animations */
+}
+
+.react-flow__handle {
+  background: var(--color-ink) !important;
+  border: 2px solid var(--color-canvas) !important;
+  width: 10px !important;
+  height: 10px !important;
+}
+
+.react-flow__edge-path {
+  stroke: var(--color-ink) !important;
+  stroke-width: 2px !important;
+}
+
+.react-flow__controls {
+  box-shadow: var(--shadow-hard) !important;
+  border: var(--border-hard) !important;
+  border-radius: 0 !important;
+}
+
+.react-flow__controls-button {
+  border-radius: 0 !important;
+  border-bottom: 1px solid var(--color-ink) !important;
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom: none !important;
+}
+
+.react-flow__minimap {
+  box-shadow: var(--shadow-hard) !important;
+  border: var(--border-hard) !important;
+  border-radius: 0 !important;
+}
+
+/* ========================================
+   SCROLLBAR STYLING
+======================================== */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-canvas);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-ink);
+  border: 1px solid var(--color-canvas);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #333333;
+}
+
+/* ========================================
+   ANIMATION KEYFRAMES
+======================================== */
+
+@keyframes pulse-pop {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-2px);
+  }
+
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+.animate-pulse-pop {
+  animation: pulse-pop 200ms ease-in-out;
+}
+
+.animate-shake {
+  animation: shake 200ms ease-in-out;
+}
