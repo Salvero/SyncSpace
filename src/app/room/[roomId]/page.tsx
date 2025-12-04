@@ -4,6 +4,7 @@ import { use } from "react";
 import dynamic from "next/dynamic";
 import { Room, useCursorPresence } from "@/components/Room";
 import { CursorsOverlay, PresenceIndicator } from "@/components/canvas/Cursor";
+import { Logo } from "@/components/Logo";
 
 // Dynamically import SyncedBoard to avoid SSR issues with React Flow
 const SyncedBoard = dynamic(() => import("@/components/canvas/SyncedBoard"), {
@@ -42,6 +43,13 @@ function CollaborativeCanvas({ roomId }: { roomId: string }) {
             onPointerMove={handlePointerMove}
             onPointerLeave={handlePointerLeave}
         >
+            {/* Header with Logo */}
+            <div className="absolute top-4 left-4 z-50">
+                <a href="/" className="block hover:opacity-80 transition-opacity">
+                    <Logo size="md" showText={true} />
+                </a>
+            </div>
+
             {/* Presence indicator - shows YOUR name */}
             <PresenceIndicator
                 myName={myName}
@@ -62,7 +70,7 @@ function CollaborativeCanvas({ roomId }: { roomId: string }) {
             {/* Back to home button */}
             <a
                 href="/"
-                className="absolute top-16 right-4 z-50 px-3 py-1.5 text-sm font-medium border-2 border-[var(--color-ink)] bg-[var(--color-canvas)] shadow-[2px_2px_0px_0px_#000000] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_0px_#000000] transition-all duration-100"
+                className="absolute top-4 right-4 z-50 px-3 py-1.5 text-sm font-medium border-2 border-[var(--color-ink)] bg-[var(--color-canvas)] shadow-[2px_2px_0px_0px_#000000] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_0px_#000000] transition-all duration-100"
                 aria-label="Back to home"
             >
                 ← Home

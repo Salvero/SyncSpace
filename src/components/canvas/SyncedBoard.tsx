@@ -5,8 +5,6 @@ import {
     ReactFlow,
     Background,
     Controls,
-    MiniMap,
-    addEdge as addReactFlowEdge,
     Connection,
     Edge,
     NodeChange,
@@ -300,21 +298,59 @@ export default function SyncedBoard() {
                     showInteractive={false}
                     className="!shadow-[4px_4px_0px_0px_#000000] !border-2 !border-[var(--color-ink)] !rounded-none"
                 />
-
-                <MiniMap
-                    nodeColor={(node) => {
-                        const data = node.data as { color: string };
-                        const colorMap: Record<string, string> = {
-                            yellow: "#FFE600",
-                            blue: "#3B82F6",
-                            pink: "#EC4899",
-                        };
-                        return colorMap[data.color] || "#FFE600";
-                    }}
-                    className="!shadow-[4px_4px_0px_0px_#000000] !border-2 !border-[var(--color-ink)] !rounded-none"
-                    maskColor="rgba(0, 0, 0, 0.1)"
-                />
             </ReactFlow>
+
+            {/* Empty state - Welcome message when no notes */}
+            {notes.length === 0 && !isLoading && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                    <div className="flex flex-col items-center gap-6 text-center max-w-md px-8">
+                        {/* Welcome icon */}
+                        <div className="flex gap-3">
+                            <div className="w-16 h-16 bg-[var(--color-pop-yellow)] border-3 border-[var(--color-ink)] shadow-[4px_4px_0px_0px_#000000] flex items-center justify-center">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2">
+                                    <path d="M12 5v14M5 12h14" />
+                                </svg>
+                            </div>
+                            <div className="w-16 h-16 bg-[var(--color-pop-blue)] border-3 border-[var(--color-ink)] shadow-[4px_4px_0px_0px_#000000] flex items-center justify-center">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+                                </svg>
+                            </div>
+                            <div className="w-16 h-16 bg-[var(--color-pop-pink)] border-3 border-[var(--color-ink)] shadow-[4px_4px_0px_0px_#000000] flex items-center justify-center">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                    <circle cx="9" cy="7" r="4" />
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        {/* Welcome text */}
+                        <div>
+                            <h2 className="font-display text-2xl mb-2">START BRAINSTORMING</h2>
+                            <p className="text-[var(--color-ink)]/60 mb-4">
+                                Create your first note and let AI help expand your ideas
+                            </p>
+                        </div>
+
+                        {/* Quick tips */}
+                        <div className="flex flex-wrap justify-center gap-3">
+                            <div className="px-3 py-2 bg-[var(--color-pop-yellow)] border-2 border-[var(--color-ink)] shadow-[2px_2px_0px_0px_#000000]">
+                                <span className="font-mono text-sm font-bold">N</span>
+                                <span className="text-sm ml-2">Add Note</span>
+                            </div>
+                            <div className="px-3 py-2 bg-[var(--color-pop-pink)] border-2 border-[var(--color-ink)] shadow-[2px_2px_0px_0px_#000000] text-white">
+                                <span className="font-mono text-sm font-bold">M</span>
+                                <span className="text-sm ml-2">AI Magic</span>
+                            </div>
+                            <div className="px-3 py-2 bg-[var(--color-canvas)] border-2 border-[var(--color-ink)] shadow-[2px_2px_0px_0px_#000000]">
+                                <span className="font-mono text-sm font-bold">Drag</span>
+                                <span className="text-sm ml-2">Connect</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Sync indicator */}
             <div className="absolute bottom-36 left-4 z-40">

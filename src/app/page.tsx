@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 import { Button } from "@/components/ui/Button";
 import { UserMenu } from "@/components/UserMenu";
+import { Logo } from "@/components/Logo";
 
 export default function Home() {
   const router = useRouter();
@@ -21,10 +22,13 @@ export default function Home() {
       </div>
 
       {/* Hero Section */}
-      <div className="max-w-2xl text-center">
-        {/* Logo/Title */}
+      <div className="max-w-2xl text-center flex flex-col items-center">
+        {/* Logo */}
+        <Logo size="xl" showText={false} className="mb-6" />
+
+        {/* Title */}
         <h1 className="font-display text-5xl md:text-7xl mb-4 tracking-tight">
-          SYNC<span className="text-[var(--color-pop-yellow)]">SPACE</span>
+          SYNC<span className="text-[var(--color-pop-pink)]">SPACE</span>
         </h1>
 
         {/* Tagline */}

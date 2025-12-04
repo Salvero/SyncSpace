@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
+import { Logo } from "@/components/Logo";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -51,9 +52,10 @@ export default function LoginPage() {
         <main className="min-h-screen bg-[var(--color-canvas)] bg-dot-pattern flex items-center justify-center p-8">
             <div className="w-full max-w-md">
                 {/* Header */}
-                <div className="text-center mb-8">
+                <div className="flex flex-col items-center mb-8">
+                    <Logo size="lg" showText={false} className="mb-4" />
                     <h1 className="font-display text-4xl mb-2">
-                        SYNC<span className="text-[var(--color-pop-yellow)]">SPACE</span>
+                        SYNC<span className="text-[var(--color-pop-pink)]">SPACE</span>
                     </h1>
                     <p className="text-[var(--color-ink)]/60">
                         {isSignUp ? "Create your account" : "Welcome back"}
