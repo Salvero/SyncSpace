@@ -1,12 +1,13 @@
 import { google } from "@ai-sdk/google";
-import { streamText } from "ai";
+import { generateText } from "ai";
 
-// Allow streaming responses up to 30 seconds
+// Allow responses up to 30 seconds
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
     // Validate API key is configured
     if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+        console.error("GOOGLE_GENERATIVE_AI_API_KEY is not set");
         return new Response(
             JSON.stringify({ error: "Gemini API key not configured" }),
             { status: 500, headers: { "Content-Type": "application/json" } }
@@ -42,16 +43,27 @@ Format your response as a JSON array with exactly 3 strings:
 
 Only output the JSON array, nothing else.`;
 
-        const result = streamText({
-            model: google("gemini-1.5-flash"),
+        console.log("Calling Gemini API with prompt for:", noteContent);
+
+        const result = await generateText({
+            model: google("gemini-2.0-flash-exp"),
             prompt,
         });
 
-        return result.toTextStreamResponse();
+        console.log("Gemini response:", result.text);
+
+        if (!result.text) {
+            throw new Error("Empty response from Gemini");
+        }
+
+        return new Response(result.text, {
+            headers: { "Content-Type": "text/plain" },
+        });
     } catch (error) {
         console.error("AI generation error:", error);
+        const errorMessage = error instanceof Error ? error.message : "Failed to generate ideas";
         return new Response(
-            JSON.stringify({ error: "Failed to generate ideas" }),
+            JSON.stringify({ error: errorMessage }),
             { status: 500, headers: { "Content-Type": "application/json" } }
         );
     }

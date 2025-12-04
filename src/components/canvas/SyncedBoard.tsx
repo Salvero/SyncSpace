@@ -9,6 +9,7 @@ import {
     Edge,
     NodeChange,
     BackgroundVariant,
+    applyNodeChanges,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
@@ -41,6 +42,9 @@ export default function SyncedBoard() {
     const [isGenerating, setIsGenerating] = useState(false);
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
+    // Local node state for smooth dragging
+    const [localNodes, setLocalNodes] = useState<NanoNoteNode[]>([]);
+
     // Convert synced edges to React Flow format with mind-map styling
     const flowEdges: Edge[] = useMemo(() => {
         return syncedEdges.map((edge) => ({
@@ -53,9 +57,9 @@ export default function SyncedBoard() {
         }));
     }, [syncedEdges]);
 
-    // Convert synced notes to React Flow nodes with handlers
-    const flowNodes = useMemo(() => {
-        return notes.map((node) => ({
+    // Sync notes from Y.js to local state (for smooth dragging)
+    useEffect(() => {
+        const flowNodes = notes.map((node) => ({
             ...node,
             data: {
                 ...node.data,
@@ -64,14 +68,19 @@ export default function SyncedBoard() {
                 onDelete: deleteNote,
             },
         }));
+        setLocalNodes(flowNodes);
     }, [notes, updateNoteContent, updateNoteColor, deleteNote]);
 
-    // Handle node changes (position, selection)
+    // Handle node changes (position, selection) with smooth local updates
     const onNodesChange = useCallback(
         (changes: NodeChange<NanoNoteNode>[]) => {
+            // Apply changes locally for smooth dragging
+            setLocalNodes((nds) => applyNodeChanges(changes, nds));
+
+            // Handle specific change types
             changes.forEach((change) => {
                 if (change.type === "position" && change.position && !change.dragging) {
-                    // Only update when drag ends
+                    // Only sync to Y.js when drag ends
                     updateNotePosition(change.id, change.position.x, change.position.y);
                 }
                 if (change.type === "select") {
@@ -107,8 +116,12 @@ export default function SyncedBoard() {
     const handleMagic = useCallback(async () => {
         if (!selectedNodeId || isGenerating) return;
 
-        const selectedNode = notes.find((n) => n.id === selectedNodeId);
-        if (!selectedNode) return;
+        // Use localNodes for current position (includes drag updates)
+        const selectedNode = localNodes.find((n) => n.id === selectedNodeId);
+        if (!selectedNode) {
+            console.error("Selected node not found:", selectedNodeId);
+            return;
+        }
 
         const noteContent = selectedNode.data.content;
         if (!noteContent.trim()) {
@@ -119,10 +132,12 @@ export default function SyncedBoard() {
         setIsGenerating(true);
 
         try {
-            const contextNotes = notes
+            const contextNotes = localNodes
                 .filter((n) => n.id !== selectedNodeId && n.data.content.trim())
                 .slice(0, 3)
                 .map((n) => n.data.content);
+
+            console.log("Calling AI with content:", noteContent);
 
             const response = await fetch("/api/ai", {
                 method: "POST",
@@ -131,33 +146,49 @@ export default function SyncedBoard() {
             });
 
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || "Failed to generate ideas");
+                let errorMessage = "Failed to generate ideas";
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.error || errorMessage;
+                } catch {
+                    // Response wasn't JSON
+                }
+                console.error("AI API error:", errorMessage);
+                throw new Error(errorMessage);
             }
 
-            const reader = response.body?.getReader();
-            if (!reader) throw new Error("No response body");
-
-            let fullText = "";
-            const decoder = new TextDecoder();
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                fullText += decoder.decode(value, { stream: true });
-            }
+            const fullText = await response.text();
+            console.log("AI response:", fullText);
 
             let ideas: string[];
             try {
                 const jsonMatch = fullText.match(/\[[\s\S]*\]/);
                 if (jsonMatch) {
                     ideas = JSON.parse(jsonMatch[0]);
-                } else {
+                } else if (fullText.trim()) {
+                    // Try to split by newlines if not JSON
                     ideas = fullText.split("\n").filter((line) => line.trim()).slice(0, 3);
+                } else {
+                    // Empty response - use fallback
+                    console.warn("Empty AI response, using fallback ideas");
+                    ideas = [];
                 }
-            } catch {
-                ideas = ["Related idea 1", "Related idea 2", "Related idea 3"];
+            } catch (parseError) {
+                console.error("Failed to parse AI response:", parseError);
+                ideas = [];
             }
+
+            // If no ideas were generated, create fallback ideas based on the note content
+            if (!ideas || ideas.length === 0) {
+                console.log("Using fallback ideas for:", noteContent);
+                ideas = [
+                    `Expand on: ${noteContent.slice(0, 30)}...`,
+                    `Alternative approach to ${noteContent.split(" ").slice(0, 3).join(" ")}`,
+                    `Questions about ${noteContent.split(" ").slice(0, 3).join(" ")}`
+                ];
+            }
+
+            console.log("Parsed ideas:", ideas);
 
             const colors: PopColor[] = ["yellow", "blue", "pink"];
             const positions = [
@@ -168,6 +199,7 @@ export default function SyncedBoard() {
 
             ideas.slice(0, 3).forEach((idea, i) => {
                 const newId = addNote(positions[i].x, positions[i].y, colors[i]);
+                console.log("Created note:", newId, "with idea:", idea);
                 setTimeout(() => {
                     updateNoteContent(newId, idea);
                 }, 100);
@@ -179,7 +211,7 @@ export default function SyncedBoard() {
         } finally {
             setIsGenerating(false);
         }
-    }, [selectedNodeId, notes, addNote, updateNoteContent, addEdge, isGenerating]);
+    }, [selectedNodeId, localNodes, addNote, updateNoteContent, addEdge, isGenerating]);
 
     // Export as PNG
     const handleExportPNG = useCallback(async () => {
@@ -273,7 +305,7 @@ export default function SyncedBoard() {
     return (
         <div ref={reactFlowWrapper} className="w-full h-full">
             <ReactFlow
-                nodes={flowNodes}
+                nodes={localNodes}
                 edges={flowEdges}
                 onNodesChange={onNodesChange}
                 onConnect={onConnect}

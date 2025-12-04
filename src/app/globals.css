@@ -134,6 +134,24 @@ body {
   /* No sluggish animations */
 }
 
+.react-flow__node.dragging {
+  cursor: grabbing !important;
+  z-index: 1000 !important;
+}
+
+.react-flow__node.selectable:not(.dragging) {
+  cursor: grab;
+}
+
+/* Ensure smooth dragging without any transform transitions */
+.react-flow__node.draggable {
+  will-change: transform;
+}
+
+.react-flow__pane {
+  cursor: default;
+}
+
 .react-flow__handle {
   background: var(--color-ink) !important;
   border: 2px solid var(--color-canvas) !important;

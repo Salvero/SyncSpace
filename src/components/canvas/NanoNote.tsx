@@ -82,8 +82,7 @@ const NanoNote = memo(function NanoNote({ id, data, selected }: NodeProps) {
                 "border-2 border-[var(--color-ink)]",
                 "shadow-[4px_4px_0px_0px_#000000]",
                 colorClasses[noteData.color],
-                selected && "ring-2 ring-[var(--color-ink)] ring-offset-2",
-                "transition-shadow duration-100"
+                selected && "ring-2 ring-[var(--color-ink)] ring-offset-2"
             )}
             onDoubleClick={handleDoubleClick}
         >
