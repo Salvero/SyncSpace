@@ -1,0 +1,277 @@
+"use client";
+
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import {
+    ReactFlow,
+    Background,
+    Controls,
+    MiniMap,
+    useNodesState,
+    useEdgesState,
+    addEdge,
+    Connection,
+    Edge,
+    NodeChange,
+    applyNodeChanges,
+    BackgroundVariant,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+
+import NanoNote from "./NanoNote";
+import { Toolbar } from "./Toolbar";
+import { useCanvasStore } from "@/hooks/useStore";
+import type { NanoNoteNode } from "@/lib/types";
+
+// Register custom node types
+const nodeTypes = {
+    nanoNote: NanoNote,
+};
+
+interface BoardProps {
+    roomId?: string;
+}
+
+export default function Board({ roomId }: BoardProps) {
+    const {
+        nodes: storeNodes,
+        selectedNodeId,
+        addNote,
+        updateNoteContent,
+        updateNoteColor,
+        updateNotePosition,
+        deleteNote,
+        setSelectedNode,
+        setNodes: setStoreNodes,
+        undo,
+        redo,
+        canUndo,
+        canRedo,
+        pushHistory,
+    } = useCanvasStore();
+
+    const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+    const reactFlowWrapper = useRef<HTMLDivElement>(null);
+
+    // Convert store nodes to React Flow nodes with handlers
+    const flowNodes = useMemo(() => {
+        return storeNodes.map((node) => ({
+            ...node,
+            data: {
+                ...node.data,
+                onContentChange: updateNoteContent,
+                onColorChange: updateNoteColor,
+                onDelete: deleteNote,
+            },
+        }));
+    }, [storeNodes, updateNoteContent, updateNoteColor, deleteNote]);
+
+    // Handle node changes (position, selection, etc.)
+    const onNodesChange = useCallback(
+        (changes: NodeChange<NanoNoteNode>[]) => {
+            // Apply changes and update store
+            changes.forEach((change) => {
+                if (change.type === "position" && change.position) {
+                    updateNotePosition(change.id, change.position.x, change.position.y);
+                }
+                if (change.type === "select") {
+                    if (change.selected) {
+                        setSelectedNode(change.id);
+                    } else if (selectedNodeId === change.id) {
+                        setSelectedNode(null);
+                    }
+                }
+            });
+        },
+        [updateNotePosition, setSelectedNode, selectedNodeId]
+    );
+
+    // Handle drag stop to record history
+    const onNodeDragStop = useCallback(() => {
+        pushHistory();
+    }, [pushHistory]);
+
+    // Handle edge connections
+    const onConnect = useCallback(
+        (connection: Connection) => {
+            setEdges((eds) =>
+                addEdge(
+                    {
+                        ...connection,
+                        style: { stroke: "#111111", strokeWidth: 2 },
+                    },
+                    eds
+                )
+            );
+        },
+        [setEdges]
+    );
+
+    // Add note at center of viewport
+    const handleAddNote = useCallback(() => {
+        // Get a random position around center
+        const x = 200 + Math.random() * 300;
+        const y = 200 + Math.random() * 200;
+        addNote(x, y);
+    }, [addNote]);
+
+    // Magic (AI) functionality
+    const handleMagic = useCallback(() => {
+        if (!selectedNodeId) return;
+
+        const selectedNode = storeNodes.find((n) => n.id === selectedNodeId);
+        if (!selectedNode) return;
+
+        // For now, create 3 connected notes with placeholder content
+        // This will be enhanced with actual AI integration
+        const colors: Array<"yellow" | "blue" | "pink"> = ["yellow", "blue", "pink"];
+        const positions = [
+            { x: selectedNode.position.x - 200, y: selectedNode.position.y + 150 },
+            { x: selectedNode.position.x, y: selectedNode.position.y + 200 },
+            { x: selectedNode.position.x + 200, y: selectedNode.position.y + 150 },
+        ];
+
+        positions.forEach((pos, i) => {
+            const newId = addNote(pos.x, pos.y, colors[i]);
+            // Add edge from selected node to new node
+            setEdges((eds) =>
+                addEdge(
+                    {
+                        id: `e-${selectedNodeId}-${newId}`,
+                        source: selectedNodeId,
+                        target: newId,
+                        style: { stroke: "#111111", strokeWidth: 2 },
+                    },
+                    eds
+                )
+            );
+        });
+    }, [selectedNodeId, storeNodes, addNote, setEdges]);
+
+    // Export functionality
+    const handleExport = useCallback(() => {
+        // Basic export - download as JSON
+        const exportData = {
+            nodes: storeNodes,
+            edges,
+            exportedAt: new Date().toISOString(),
+        };
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+            type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `syncspace-export-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }, [storeNodes, edges]);
+
+    // Keyboard shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ignore if typing in an input
+            if (
+                e.target instanceof HTMLTextAreaElement ||
+                e.target instanceof HTMLInputElement
+            ) {
+                return;
+            }
+
+            // N - Add note
+            if (e.key === "n" || e.key === "N") {
+                e.preventDefault();
+                handleAddNote();
+            }
+
+            // M - Magic (AI)
+            if ((e.key === "m" || e.key === "M") && selectedNodeId) {
+                e.preventDefault();
+                handleMagic();
+            }
+
+            // Ctrl/Cmd + Z - Undo
+            if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+                e.preventDefault();
+                undo();
+            }
+
+            // Ctrl/Cmd + Shift + Z - Redo
+            if ((e.ctrlKey || e.metaKey) && e.key === "z" && e.shiftKey) {
+                e.preventDefault();
+                redo();
+            }
+
+            // Delete or Backspace - Delete selected node
+            if ((e.key === "Delete" || e.key === "Backspace") && selectedNodeId) {
+                e.preventDefault();
+                deleteNote(selectedNodeId);
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [handleAddNote, handleMagic, undo, redo, selectedNodeId, deleteNote]);
+
+    return (
+        <div ref={reactFlowWrapper} className="w-full h-full">
+            <ReactFlow
+                nodes={flowNodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                onNodeDragStop={onNodeDragStop}
+                nodeTypes={nodeTypes}
+                fitView
+                fitViewOptions={{ padding: 0.5 }}
+                minZoom={0.1}
+                maxZoom={2}
+                defaultEdgeOptions={{
+                    style: { stroke: "#111111", strokeWidth: 2 },
+                }}
+                proOptions={{ hideAttribution: true }}
+            >
+                {/* Dot pattern background */}
+                <Background
+                    variant={BackgroundVariant.Dots}
+                    gap={24}
+                    size={1.5}
+                    color="#00000020"
+                />
+
+                {/* Controls */}
+                <Controls
+                    showInteractive={false}
+                    className="!shadow-[4px_4px_0px_0px_#000000] !border-2 !border-[var(--color-ink)] !rounded-none"
+                />
+
+                {/* Minimap */}
+                <MiniMap
+                    nodeColor={(node) => {
+                        const data = node.data as { color: string };
+                        const colorMap: Record<string, string> = {
+                            yellow: "#FFE600",
+                            blue: "#3B82F6",
+                            pink: "#EC4899",
+                        };
+                        return colorMap[data.color] || "#FFE600";
+                    }}
+                    className="!shadow-[4px_4px_0px_0px_#000000] !border-2 !border-[var(--color-ink)] !rounded-none"
+                    maskColor="rgba(0, 0, 0, 0.1)"
+                />
+            </ReactFlow>
+
+            {/* Toolbar */}
+            <Toolbar
+                onAddNote={handleAddNote}
+                onUndo={undo}
+                onRedo={redo}
+                onMagic={handleMagic}
+                onExport={handleExport}
+                canUndo={canUndo()}
+                canRedo={canRedo()}
+                selectedNodeId={selectedNodeId}
+            />
+        </div>
+    );
+}
