@@ -16,7 +16,7 @@ import "@xyflow/react/dist/style.css";
 
 import NanoNote from "./NanoNote";
 import { Toolbar } from "./Toolbar";
-import { useSyncedCanvas } from "@/hooks/useSyncedCanvas";
+import { useSyncedCanvas, ConnectionStatus } from "@/hooks/useSyncedCanvas";
 import type { NanoNoteNode, PopColor } from "@/lib/types";
 
 // Register custom node types
@@ -30,6 +30,7 @@ export default function SyncedBoard() {
         edges: syncedEdges,
         isLoading,
         isSynced,
+        connectionStatus,
         addNote,
         updateNoteContent,
         updateNoteColor,
@@ -314,10 +315,21 @@ export default function SyncedBoard() {
             </ReactFlow>
 
             {/* Sync indicator */}
-            <div className="absolute bottom-20 left-4 z-40">
-                <div className={`flex items-center gap-2 px-3 py-1.5 text-xs font-mono border-2 border-[var(--color-ink)] shadow-[2px_2px_0px_0px_#000000] ${isSynced ? 'bg-green-100' : 'bg-yellow-100'}`}>
-                    <div className={`w-2 h-2 rounded-full ${isSynced ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`} />
-                    {isSynced ? 'Synced' : 'Syncing...'}
+            <div className="absolute bottom-36 left-4 z-40">
+                <div className={`flex items-center gap-2 px-3 py-1.5 text-xs font-mono border-2 border-[var(--color-ink)] shadow-[2px_2px_0px_0px_#000000] ${
+                    connectionStatus === 'connected' && isSynced ? 'bg-green-100' :
+                    connectionStatus === 'disconnected' ? 'bg-red-100' :
+                    'bg-yellow-100'
+                }`}>
+                    <div className={`w-2 h-2 rounded-full ${
+                        connectionStatus === 'connected' && isSynced ? 'bg-green-500' :
+                        connectionStatus === 'disconnected' ? 'bg-red-500' :
+                        'bg-yellow-500 animate-pulse'
+                    }`} />
+                    {connectionStatus === 'connected' && isSynced ? 'Synced' :
+                     connectionStatus === 'disconnected' ? 'Disconnected' :
+                     connectionStatus === 'reconnecting' ? 'Reconnecting...' :
+                     'Syncing...'}
                 </div>
             </div>
 
