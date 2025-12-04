@@ -180,8 +180,31 @@ export default function SyncedBoard() {
         }
     }, [selectedNodeId, notes, addNote, updateNoteContent, addEdge, isGenerating]);
 
-    // Export functionality
-    const handleExport = useCallback(() => {
+    // Export as PNG
+    const handleExportPNG = useCallback(async () => {
+        const element = reactFlowWrapper.current;
+        if (!element) return;
+
+        try {
+            const { toPng } = await import('html-to-image');
+            const dataUrl = await toPng(element, {
+                backgroundColor: '#FFFCF0',
+                quality: 1,
+                pixelRatio: 2,
+            });
+
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = `syncspace-${Date.now()}.png`;
+            a.click();
+        } catch (error) {
+            console.error('Export failed:', error);
+            alert('Failed to export as PNG');
+        }
+    }, []);
+
+    // Export as JSON
+    const handleExportJSON = useCallback(() => {
         const exportData = {
             notes: notes.map((n) => ({
                 id: n.id,
@@ -314,7 +337,7 @@ export default function SyncedBoard() {
                 onUndo={() => { }}
                 onRedo={() => { }}
                 onMagic={handleMagic}
-                onExport={handleExport}
+                onExport={handleExportPNG}
                 canUndo={false}
                 canRedo={false}
                 selectedNodeId={selectedNodeId}
