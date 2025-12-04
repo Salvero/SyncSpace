@@ -13,6 +13,7 @@ interface ToolbarProps {
     canUndo: boolean;
     canRedo: boolean;
     selectedNodeId: string | null;
+    isGenerating?: boolean;
 }
 
 // Icon components
@@ -59,6 +60,7 @@ export const Toolbar = memo(function Toolbar({
     canUndo,
     canRedo,
     selectedNodeId,
+    isGenerating = false,
 }: ToolbarProps) {
     return (
         <div
@@ -118,12 +120,16 @@ export const Toolbar = memo(function Toolbar({
                 onClick={onMagic}
                 variant="pink"
                 size="sm"
-                disabled={!selectedNodeId}
+                disabled={!selectedNodeId || isGenerating}
                 aria-label="AI Magic - Generate related ideas"
                 title="Magic (M)"
             >
-                <MagicIcon />
-                <span className="hidden sm:inline">Magic</span>
+                {isGenerating ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent animate-spin" />
+                ) : (
+                    <MagicIcon />
+                )}
+                <span className="hidden sm:inline">{isGenerating ? "Thinking..." : "Magic"}</span>
             </Button>
 
             {/* Export */}
