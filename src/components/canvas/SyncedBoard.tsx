@@ -39,8 +39,8 @@ export default function SyncedBoard() {
         addEdge,
     } = useSyncedCanvas();
 
-    // Get undo/redo from Y.js context
-    const { undo, redo, canUndo, canRedo } = useYjs();
+    // Get undo/redo and doc from Y.js context
+    const { undo, redo, canUndo, canRedo, doc } = useYjs();
 
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -133,7 +133,10 @@ export default function SyncedBoard() {
             return;
         }
 
-        const noteContent = selectedNode.data.content;
+        // Get content from Y.Text (the real-time synced content)
+        const yText = doc?.getText(`note:${selectedNodeId}`);
+        const noteContent = yText?.toString() || "";
+
         if (!noteContent.trim()) {
             alert("Please add some content to the note first!");
             return;
@@ -142,10 +145,15 @@ export default function SyncedBoard() {
         setIsGenerating(true);
 
         try {
+            // Get context notes from Y.Text as well
             const contextNotes = localNodes
-                .filter((n) => n.id !== selectedNodeId && n.data.content.trim())
+                .filter((n) => n.id !== selectedNodeId)
                 .slice(0, 3)
-                .map((n) => n.data.content);
+                .map((n) => {
+                    const contextYText = doc?.getText(`note:${n.id}`);
+                    return contextYText?.toString() || "";
+                })
+                .filter((content) => content.trim());
 
             console.log("Calling AI with content:", noteContent);
 
@@ -221,7 +229,7 @@ export default function SyncedBoard() {
         } finally {
             setIsGenerating(false);
         }
-    }, [selectedNodeId, localNodes, addNote, updateNoteContent, addEdge, isGenerating]);
+    }, [selectedNodeId, localNodes, addNote, updateNoteContent, addEdge, isGenerating, doc]);
 
     // Export as PNG
     const handleExportPNG = useCallback(async () => {
