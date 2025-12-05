@@ -96,13 +96,21 @@ const NanoNote = memo(function NanoNote({ id, data, selected }: NodeProps) {
         >
             {/* Header with color picker and delete */}
             <div className="flex items-center justify-between px-2 py-1 border-b border-[var(--color-ink)]">
-                {/* Color picker toggle */}
+                {/* Color picker toggle - square with palette icon */}
                 <button
                     onClick={() => setShowColorPicker(!showColorPicker)}
-                    className="w-5 h-5 rounded-full border-2 border-[var(--color-ink)] hover:scale-110 transition-transform duration-100"
-                    style={{ backgroundColor: getPopColorValue(noteData.color) }}
+                    className="flex items-center gap-1 px-1.5 py-0.5 border border-[var(--color-ink)] hover:bg-[var(--color-ink)]/10 transition-colors duration-100"
                     aria-label="Change note color"
-                />
+                    title="Change color"
+                >
+                    <span
+                        className="w-3 h-3 border border-[var(--color-ink)]"
+                        style={{ backgroundColor: getPopColorValue(noteData.color) }}
+                    />
+                    <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" className="opacity-60">
+                        <path d="M13.354 3.146a.5.5 0 010 .708l-7 7a.5.5 0 01-.354.146H4a.5.5 0 01-.5-.5v-2a.5.5 0 01.146-.354l7-7a.5.5 0 01.708 0l2 2zM10.5 4.707L5.5 9.707V10.5h.793l5-5L10.5 4.707z" />
+                    </svg>
+                </button>
 
                 {/* Delete button */}
                 <button
