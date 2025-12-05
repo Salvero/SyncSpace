@@ -1,10 +1,46 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import dynamic from "next/dynamic";
 import { Room, useCursorPresence } from "@/components/Room";
 import { CursorsOverlay, PresenceIndicator } from "@/components/canvas/Cursor";
 import { Logo } from "@/components/Logo";
+
+// Share button with copy-to-clipboard
+function ShareButton({ roomId }: { roomId: string }) {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = async () => {
+        const url = `${window.location.origin}/room/${roomId}`;
+        try {
+            await navigator.clipboard.writeText(url);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+            console.error("Failed to copy:", err);
+        }
+    };
+
+    return (
+        <button
+            onClick={handleCopy}
+            className="p-1.5 hover:bg-[var(--color-ink)]/10 rounded transition-colors"
+            title="Copy room link"
+            aria-label="Copy room link"
+        >
+            {copied ? (
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 8L6 11L13 4" />
+                </svg>
+            ) : (
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="5" y="5" width="8" height="9" rx="1" />
+                    <path d="M11 5V3C11 2.44772 10.5523 2 10 2H3C2.44772 2 2 2.44772 2 3V11C2 11.5523 2.44772 12 3 12H5" />
+                </svg>
+            )}
+        </button>
+    );
+}
 
 // Dynamically import SyncedBoard to avoid SSR issues with React Flow
 const SyncedBoard = dynamic(() => import("@/components/canvas/SyncedBoard"), {
@@ -57,15 +93,18 @@ function CollaborativeCanvas({ roomId }: { roomId: string }) {
                 othersCount={othersCount}
             />
 
-            {/* Room ID indicator - positioned on right side */}
+            {/* Room ID indicator with Share button */}
             <div className="absolute top-16 right-4 z-50">
                 <div className="flex flex-col items-end gap-1 px-4 py-2 bg-[var(--color-canvas)] border-2 border-[var(--color-ink)] shadow-[3px_3px_0px_0px_#000000]">
                     <span className="text-xs font-medium text-[var(--color-ink)]/60 uppercase tracking-wide">
                         Room ID
                     </span>
-                    <span className="text-base font-mono font-bold text-[var(--color-ink)]">
-                        {roomId.slice(0, 8)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                        <span className="text-base font-mono font-bold text-[var(--color-ink)]">
+                            {roomId.slice(0, 8)}
+                        </span>
+                        <ShareButton roomId={roomId} />
+                    </div>
                 </div>
             </div>
 
