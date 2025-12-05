@@ -16,6 +16,7 @@ import "@xyflow/react/dist/style.css";
 import NanoNote from "./NanoNote";
 import { Toolbar } from "./Toolbar";
 import { useSyncedCanvas, ConnectionStatus } from "@/hooks/useSyncedCanvas";
+import { useYjs } from "@/hooks/useYjs";
 import type { NanoNoteNode, PopColor } from "@/lib/types";
 
 // Register custom node types
@@ -37,6 +38,9 @@ export default function SyncedBoard() {
         deleteNote,
         addEdge,
     } = useSyncedCanvas();
+
+    // Get undo/redo from Y.js context
+    const { undo, redo, canUndo, canRedo } = useYjs();
 
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -263,6 +267,21 @@ export default function SyncedBoard() {
     // Keyboard shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            // Undo: Ctrl+Z (allow even in textarea for global undo)
+            if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+                e.preventDefault();
+                undo();
+                return;
+            }
+
+            // Redo: Ctrl+Y or Ctrl+Shift+Z
+            if ((e.ctrlKey || e.metaKey) && (e.key === "y" || (e.key === "z" && e.shiftKey))) {
+                e.preventDefault();
+                redo();
+                return;
+            }
+
+            // Skip other shortcuts if in text input
             if (
                 e.target instanceof HTMLTextAreaElement ||
                 e.target instanceof HTMLInputElement
@@ -288,7 +307,7 @@ export default function SyncedBoard() {
 
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [handleAddNote, handleMagic, selectedNodeId, deleteNote]);
+    }, [handleAddNote, handleMagic, selectedNodeId, deleteNote, undo, redo]);
 
     // Loading state
     if (isLoading) {
@@ -386,20 +405,18 @@ export default function SyncedBoard() {
 
             {/* Sync indicator */}
             <div className="absolute bottom-36 left-4 z-40">
-                <div className={`flex items-center gap-2 px-3 py-1.5 text-xs font-mono border-2 border-[var(--color-ink)] shadow-[2px_2px_0px_0px_#000000] ${
-                    connectionStatus === 'connected' && isSynced ? 'bg-green-100' :
+                <div className={`flex items-center gap-2 px-3 py-1.5 text-xs font-mono border-2 border-[var(--color-ink)] shadow-[2px_2px_0px_0px_#000000] ${connectionStatus === 'connected' && isSynced ? 'bg-green-100' :
                     connectionStatus === 'disconnected' ? 'bg-red-100' :
-                    'bg-yellow-100'
-                }`}>
-                    <div className={`w-2 h-2 rounded-full ${
-                        connectionStatus === 'connected' && isSynced ? 'bg-green-500' :
+                        'bg-yellow-100'
+                    }`}>
+                    <div className={`w-2 h-2 rounded-full ${connectionStatus === 'connected' && isSynced ? 'bg-green-500' :
                         connectionStatus === 'disconnected' ? 'bg-red-500' :
-                        'bg-yellow-500 animate-pulse'
-                    }`} />
+                            'bg-yellow-500 animate-pulse'
+                        }`} />
                     {connectionStatus === 'connected' && isSynced ? 'Synced' :
-                     connectionStatus === 'disconnected' ? 'Disconnected' :
-                     connectionStatus === 'reconnecting' ? 'Reconnecting...' :
-                     'Syncing...'}
+                        connectionStatus === 'disconnected' ? 'Disconnected' :
+                            connectionStatus === 'reconnecting' ? 'Reconnecting...' :
+                                'Syncing...'}
                 </div>
             </div>
 
@@ -426,12 +443,12 @@ export default function SyncedBoard() {
             {/* Toolbar */}
             <Toolbar
                 onAddNote={handleAddNote}
-                onUndo={() => { }}
-                onRedo={() => { }}
+                onUndo={undo}
+                onRedo={redo}
                 onMagic={handleMagic}
                 onExport={handleExportPNG}
-                canUndo={false}
-                canRedo={false}
+                canUndo={canUndo}
+                canRedo={canRedo}
                 selectedNodeId={selectedNodeId}
                 isGenerating={isGenerating}
             />

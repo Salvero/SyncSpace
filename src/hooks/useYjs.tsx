@@ -8,9 +8,15 @@ import * as Y from "yjs";
 interface YjsContextType {
     doc: Y.Doc | null;
     provider: LiveblocksYjsProvider | null;
+    undoManager: Y.UndoManager | null;
     isLoading: boolean;
     isSynced: boolean;
     connectionStatus: ConnectionStatus;
+    // Undo/Redo functions
+    undo: () => void;
+    redo: () => void;
+    canUndo: boolean;
+    canRedo: boolean;
 }
 
 export type ConnectionStatus = "connecting" | "connected" | "reconnecting" | "disconnected";
@@ -21,22 +27,47 @@ export function YjsProvider({ children }: { children: ReactNode }) {
     const room = useRoom();
     const [doc, setDoc] = useState<Y.Doc | null>(null);
     const [provider, setProvider] = useState<LiveblocksYjsProvider | null>(null);
+    const [undoManager, setUndoManager] = useState<Y.UndoManager | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSynced, setIsSynced] = useState(false);
     const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("connecting");
+    const [canUndo, setCanUndo] = useState(false);
+    const [canRedo, setCanRedo] = useState(false);
+
     const providerRef = useRef<LiveblocksYjsProvider | null>(null);
     const docRef = useRef<Y.Doc | null>(null);
+    const undoManagerRef = useRef<Y.UndoManager | null>(null);
     const initializingRef = useRef(false);
 
     useEffect(() => {
         if (providerRef.current || initializingRef.current) return;
         initializingRef.current = true;
+
         const yDoc = new Y.Doc();
         const yProvider = new LiveblocksYjsProvider(room, yDoc);
+
+        // Create UndoManager tracking the notes array
+        const yNotes = yDoc.getArray("notes");
+        const yEdges = yDoc.getArray("edges");
+        const yUndoManager = new Y.UndoManager([yNotes, yEdges], {
+            // Track remote changes to enable undo/redo for all users
+            captureTimeout: 500,
+        });
+
         docRef.current = yDoc;
         providerRef.current = yProvider;
+        undoManagerRef.current = yUndoManager;
         setDoc(yDoc);
         setProvider(yProvider);
+        setUndoManager(yUndoManager);
+
+        // Update canUndo/canRedo state when stack changes
+        const updateUndoState = () => {
+            setCanUndo(yUndoManager.canUndo());
+            setCanRedo(yUndoManager.canRedo());
+        };
+        yUndoManager.on("stack-item-added", updateUndoState);
+        yUndoManager.on("stack-item-popped", updateUndoState);
 
         yProvider.on("sync", (synced: boolean) => {
             console.log("[Y.js] Sync status:", synced);
@@ -56,16 +87,43 @@ export function YjsProvider({ children }: { children: ReactNode }) {
         });
 
         return () => {
+            yUndoManager.destroy();
             yProvider.destroy();
             yDoc.destroy();
             providerRef.current = null;
             docRef.current = null;
+            undoManagerRef.current = null;
             initializingRef.current = false;
         };
     }, [room]);
 
+    // Undo function
+    const undo = useCallback(() => {
+        if (undoManagerRef.current?.canUndo()) {
+            undoManagerRef.current.undo();
+        }
+    }, []);
+
+    // Redo function
+    const redo = useCallback(() => {
+        if (undoManagerRef.current?.canRedo()) {
+            undoManagerRef.current.redo();
+        }
+    }, []);
+
     return (
-        <YjsContext.Provider value={{ doc, provider, isLoading, isSynced, connectionStatus }}>
+        <YjsContext.Provider value={{
+            doc,
+            provider,
+            undoManager,
+            isLoading,
+            isSynced,
+            connectionStatus,
+            undo,
+            redo,
+            canUndo,
+            canRedo,
+        }}>
             {children}
         </YjsContext.Provider>
     );
