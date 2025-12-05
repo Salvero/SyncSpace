@@ -151,6 +151,49 @@ body {
 }
 
 /* ========================================
+   MOBILE & TOUCH UTILITIES
+======================================== */
+
+/* Increase touch targets on mobile */
+@media (max-width: 640px) {
+
+  button,
+  a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Larger touch area for small buttons */
+  .touch-target {
+    position: relative;
+  }
+
+  .touch-target::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    bottom: -8px;
+    left: -8px;
+  }
+}
+
+/* Prevent pull-to-refresh and overscroll on mobile */
+html,
+body {
+  overscroll-behavior: none;
+}
+
+/* Safe area insets for notched phones */
+@supports (padding: max(0px)) {
+  .safe-area-inset {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+}
+
+/* ========================================
    FOCUS STATES - HIGH CONTRAST (Accessibility)
 ======================================== */
 

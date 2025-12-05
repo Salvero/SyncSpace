@@ -79,28 +79,31 @@ function CollaborativeCanvas({ roomId }: { roomId: string }) {
             onPointerMove={handlePointerMove}
             onPointerLeave={handlePointerLeave}
         >
-            {/* Header with Logo */}
-            <div className="absolute top-4 left-4 z-50">
+            {/* Header with Logo - smaller on mobile */}
+            <div className="absolute top-2 sm:top-4 left-2 sm:left-4 z-50">
                 <a href="/" className="block hover:opacity-80 transition-opacity">
-                    <Logo size="lg" showText={true} />
+                    <Logo size="md" showText={false} className="sm:hidden" />
+                    <Logo size="lg" showText={true} className="hidden sm:flex" />
                 </a>
             </div>
 
-            {/* Presence indicator - shows YOUR name */}
-            <PresenceIndicator
-                myName={myName}
-                myColor={myColor}
-                othersCount={othersCount}
-            />
+            {/* Presence indicator - hidden on mobile, shows YOUR name */}
+            <div className="hidden sm:block">
+                <PresenceIndicator
+                    myName={myName}
+                    myColor={myColor}
+                    othersCount={othersCount}
+                />
+            </div>
 
-            {/* Room ID indicator with Share button */}
-            <div className="absolute top-16 right-4 z-50">
-                <div className="flex flex-col items-end gap-1 px-4 py-2 bg-[var(--color-canvas)] border-2 border-[var(--color-ink)] shadow-[3px_3px_0px_0px_#000000]">
-                    <span className="text-xs font-medium text-[var(--color-ink)]/60 uppercase tracking-wide">
+            {/* Room ID indicator with Share button - adjusted for mobile */}
+            <div className="absolute top-2 sm:top-16 right-2 sm:right-4 z-50">
+                <div className="flex flex-col items-end gap-0.5 sm:gap-1 px-2 sm:px-4 py-1.5 sm:py-2 bg-[var(--color-canvas)] border-2 border-[var(--color-ink)] shadow-[2px_2px_0px_0px_#000000] sm:shadow-[3px_3px_0px_0px_#000000]">
+                    <span className="text-[10px] sm:text-xs font-medium text-[var(--color-ink)]/60 uppercase tracking-wide">
                         Room ID
                     </span>
-                    <div className="flex items-center gap-2">
-                        <span className="text-base font-mono font-bold text-[var(--color-ink)]">
+                    <div className="flex items-center gap-1 sm:gap-2">
+                        <span className="text-sm sm:text-base font-mono font-bold text-[var(--color-ink)]">
                             {roomId.slice(0, 8)}
                         </span>
                         <ShareButton roomId={roomId} />
@@ -108,10 +111,10 @@ function CollaborativeCanvas({ roomId }: { roomId: string }) {
                 </div>
             </div>
 
-            {/* Back to home button */}
+            {/* Back to home button - hidden on mobile (logo is clickable) */}
             <a
                 href="/"
-                className="absolute top-4 right-4 z-50 px-3 py-1.5 text-sm font-medium border-2 border-[var(--color-ink)] bg-[var(--color-canvas)] shadow-[2px_2px_0px_0px_#000000] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_0px_#000000] transition-all duration-100"
+                className="hidden sm:block absolute top-4 right-4 z-50 px-3 py-1.5 text-sm font-medium border-2 border-[var(--color-ink)] bg-[var(--color-canvas)] shadow-[2px_2px_0px_0px_#000000] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_0px_#000000] transition-all duration-100"
                 aria-label="Back to home"
             >
                 ← Home

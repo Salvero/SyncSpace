@@ -99,10 +99,11 @@ export const Toolbar = memo(function Toolbar({
     return (
         <div
             className={cn(
-                "fixed bottom-6 left-1/2 -translate-x-1/2 z-50",
-                "flex items-center gap-2 px-4 py-3",
+                "fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-50",
+                "flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3",
                 "bg-[var(--color-canvas)] border-2 border-[var(--color-ink)]",
-                "shadow-[4px_4px_0px_0px_#000000]"
+                "shadow-[4px_4px_0px_0px_#000000]",
+                "touch-none" // Prevent touch scrolling on toolbar
             )}
             role="toolbar"
             aria-label="Canvas toolbar"
@@ -153,8 +154,8 @@ export const Toolbar = memo(function Toolbar({
                 )}
             </div>
 
-            {/* Divider */}
-            <div className="w-px h-6 bg-[var(--color-ink)]/30" />
+            {/* Divider - hidden on very small screens */}
+            <div className="hidden xs:block w-px h-6 bg-[var(--color-ink)]/30" />
 
             {/* Undo */}
             <Button
@@ -180,8 +181,8 @@ export const Toolbar = memo(function Toolbar({
                 <RedoIcon />
             </Button>
 
-            {/* Divider */}
-            <div className="w-px h-6 bg-[var(--color-ink)]/30" />
+            {/* Divider - hidden on very small screens */}
+            <div className="hidden xs:block w-px h-6 bg-[var(--color-ink)]/30" />
 
             {/* Magic (AI) - only shown when a node is selected */}
             <Button
