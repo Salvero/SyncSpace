@@ -1,15 +1,13 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
-import { useRoom } from "@/lib/liveblocks.config";
-import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+import { useEffect, useState, useCallback } from "react";
 import * as Y from "yjs";
+import { useYjs, initializeNoteText, deleteNoteText, ConnectionStatus } from "./useYjs";
 import type { NanoNoteNode, PopColor } from "@/lib/types";
 
-// Type for the note data stored in Y.js
+// Type for the note metadata stored in Y.js (content is stored separately in Y.Text)
 interface YNoteData {
     id: string;
-    content: string;
     color: PopColor;
     x: number;
     y: number;
@@ -23,69 +21,14 @@ interface YEdgeData {
     target: string;
 }
 
-export type ConnectionStatus = "connecting" | "connected" | "reconnecting" | "disconnected";
+export type { ConnectionStatus };
 
 export function useSyncedCanvas() {
-    const room = useRoom();
-    const [doc, setDoc] = useState<Y.Doc | null>(null);
+    const { doc, isLoading, isSynced, connectionStatus } = useYjs();
     const [notes, setNotes] = useState<NanoNoteNode[]>([]);
     const [edges, setEdges] = useState<YEdgeData[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isSynced, setIsSynced] = useState(false);
-    const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("connecting");
 
-    // Ref to prevent double initialization in React Strict Mode
-    const providerRef = useRef<LiveblocksYjsProvider | null>(null);
-    const docRef = useRef<Y.Doc | null>(null);
-    const initializingRef = useRef(false);
-
-    // Initialize Y.js document and provider
-    useEffect(() => {
-        // Prevent double initialization in Strict Mode
-        if (providerRef.current || initializingRef.current) return;
-        initializingRef.current = true;
-
-        const yDoc = new Y.Doc();
-        const yProvider = new LiveblocksYjsProvider(room, yDoc);
-
-        docRef.current = yDoc;
-        providerRef.current = yProvider;
-        setDoc(yDoc);
-
-        // Wait for sync
-        yProvider.on("sync", (synced: boolean) => {
-            setIsSynced(synced);
-            setIsLoading(!synced);
-            if (synced) {
-                setConnectionStatus("connected");
-            }
-        });
-
-        // Handle connection status changes
-        yProvider.on("status", ({ status }: { status: string }) => {
-            setConnectionStatus((prev) => {
-                if (status === "connected") {
-                    return "connected";
-                } else if (status === "connecting") {
-                    return prev === "connected" ? "reconnecting" : "connecting";
-                } else if (status === "disconnected") {
-                    return "disconnected";
-                }
-                return prev;
-            });
-        });
-
-        return () => {
-            // Only cleanup on actual unmount
-            yProvider.destroy();
-            yDoc.destroy();
-            providerRef.current = null;
-            docRef.current = null;
-            initializingRef.current = false;
-        };
-    }, [room]);
-
-    // Subscribe to Y.js changes
+    // Subscribe to Y.js changes for notes metadata and edges
     useEffect(() => {
         if (!doc) return;
 
@@ -95,16 +38,22 @@ export function useSyncedCanvas() {
         // Convert Y.js data to React Flow nodes
         const updateNotes = () => {
             const notesData = yNotes.toArray();
-            const flowNodes: NanoNoteNode[] = notesData.map((note) => ({
-                id: note.id,
-                type: "nanoNote",
-                position: { x: note.x, y: note.y },
-                data: {
-                    content: note.content,
-                    color: note.color,
-                    createdAt: note.createdAt,
-                },
-            }));
+            const flowNodes: NanoNoteNode[] = notesData.map((note) => {
+                // Get content from Y.Text using doc.getText() pattern
+                const yText = doc.getText(`note:${note.id}`);
+                const content = yText.toString();
+
+                return {
+                    id: note.id,
+                    type: "nanoNote",
+                    position: { x: note.x, y: note.y },
+                    data: {
+                        content,
+                        color: note.color,
+                        createdAt: note.createdAt,
+                    },
+                };
+            });
             setNotes(flowNodes);
         };
 
@@ -116,9 +65,12 @@ export function useSyncedCanvas() {
         updateNotes();
         updateEdges();
 
-        // Subscribe to changes
+        // Subscribe to changes in notes array and edges
         yNotes.observe(updateNotes);
         yEdges.observe(updateEdges);
+
+        // Note: Y.Text updates are handled by useSyncedNoteContent hook in NanoNote
+        // We don't need to observe individual Y.Text here since NanoNote manages its own content
 
         return () => {
             yNotes.unobserve(updateNotes);
@@ -136,12 +88,14 @@ export function useSyncedCanvas() {
 
             const noteData: YNoteData = {
                 id,
-                content: "",
                 color,
                 x,
                 y,
                 createdAt: new Date().toISOString(),
             };
+
+            // Initialize Y.Text for this note
+            initializeNoteText(doc, id, "");
 
             yNotes.push([noteData]);
             return id;
@@ -149,20 +103,20 @@ export function useSyncedCanvas() {
         [doc]
     );
 
-    // Update note content
+    // Update note content - this is now handled by useSyncedNoteContent hook
+    // This function is kept for backwards compatibility (e.g., AI-generated content)
     const updateNoteContent = useCallback(
         (id: string, content: string) => {
             if (!doc) return;
 
-            const yNotes = doc.getArray<YNoteData>("notes");
-            const index = yNotes.toArray().findIndex((n) => n.id === id);
+            // Use doc.getText() pattern for proper sync
+            const yText = doc.getText(`note:${id}`);
 
-            if (index !== -1) {
-                doc.transact(() => {
-                    const note = yNotes.get(index);
-                    yNotes.delete(index, 1);
-                    yNotes.insert(index, [{ ...note, content }]);
-                });
+            // Replace content
+            const currentContent = yText.toString();
+            if (currentContent !== content) {
+                yText.delete(0, currentContent.length);
+                yText.insert(0, content);
             }
         },
         [doc]
@@ -215,11 +169,14 @@ export function useSyncedCanvas() {
             const yEdges = doc.getArray<YEdgeData>("edges");
 
             doc.transact(() => {
-                // Delete the note
+                // Delete the note metadata
                 const noteIndex = yNotes.toArray().findIndex((n) => n.id === id);
                 if (noteIndex !== -1) {
                     yNotes.delete(noteIndex, 1);
                 }
+
+                // Delete the Y.Text content
+                deleteNoteText(doc, id);
 
                 // Delete connected edges
                 const edgesToDelete = yEdges
@@ -269,3 +226,4 @@ export function useSyncedCanvas() {
         addEdge,
     };
 }
+

@@ -3,6 +3,7 @@
 import React, { memo, useCallback, useRef, useEffect, useState } from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import { cn, getPopColorValue } from "@/lib/utils";
+import { useSyncedNoteContent } from "@/hooks/useYjs";
 
 interface NanoNoteData {
     content: string;
@@ -24,19 +25,23 @@ const NanoNote = memo(function NanoNote({ id, data, selected }: NodeProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [showColorPicker, setShowColorPicker] = useState(false);
 
+    // Use Y.js synced content for real-time collaboration
+    const { content: syncedContent, handleChange: handleSyncedChange } = useSyncedNoteContent(id);
+
     // Auto-resize textarea
     useEffect(() => {
         if (textareaRef.current) {
             textareaRef.current.style.height = "auto";
             textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
         }
-    }, [noteData.content]);
+    }, [syncedContent]);
 
     const handleContentChange = useCallback(
         (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-            noteData.onContentChange?.(id, e.target.value);
+            // Use the synced change handler for real-time updates
+            handleSyncedChange(e);
         },
-        [id, noteData]
+        [handleSyncedChange]
     );
 
     const handleColorChange = useCallback(
@@ -138,7 +143,7 @@ const NanoNote = memo(function NanoNote({ id, data, selected }: NodeProps) {
             <div className="p-3">
                 <textarea
                     ref={textareaRef}
-                    value={noteData.content}
+                    value={syncedContent}
                     onChange={handleContentChange}
                     onBlur={handleBlur}
                     onKeyDown={handleKeyDown}

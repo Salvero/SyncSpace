@@ -9,6 +9,7 @@ import {
     useSelf,
 } from "@/lib/liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";
+import { YjsProvider } from "@/hooks/useYjs";
 
 interface RoomProps {
     roomId: string;
@@ -36,7 +37,9 @@ export function Room({ roomId, children }: RoomProps) {
                     </div>
                 }
             >
-                {children}
+                <YjsProvider>
+                    {children}
+                </YjsProvider>
             </ClientSideSuspense>
         </RoomProvider>
     );
