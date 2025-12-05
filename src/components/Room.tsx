@@ -10,6 +10,7 @@ import {
 } from "@/lib/liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { YjsProvider } from "@/hooks/useYjs";
+import { ToastProvider } from "@/components/ui/Toast";
 import type { PopColor } from "@/lib/types";
 
 interface RoomProps {
@@ -30,7 +31,7 @@ export function Room({ roomId, children }: RoomProps) {
         >
             <ClientSideSuspense
                 fallback={
-                    <div className="w-full h-full flex items-center justify-center bg-[var(--color-canvas)]">
+                    <div className="w-full h-full flex items-center justify-center bg-mesh bg-dot-pattern">
                         <div className="flex flex-col items-center gap-4">
                             <div className="w-12 h-12 border-4 border-[var(--color-ink)] border-t-transparent animate-spin" />
                             <span className="font-display text-lg">Connecting...</span>
@@ -38,9 +39,11 @@ export function Room({ roomId, children }: RoomProps) {
                     </div>
                 }
             >
-                <YjsProvider>
-                    {children}
-                </YjsProvider>
+                <ToastProvider>
+                    <YjsProvider>
+                        {children}
+                    </YjsProvider>
+                </ToastProvider>
             </ClientSideSuspense>
         </RoomProvider>
     );

@@ -298,6 +298,23 @@ body {
   animation: shake 200ms ease-in-out;
 }
 
+/* Toast slide-in animation */
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 200ms ease-out;
+}
+
 /* ========================================
    NEXT.JS DEV TOOLS INDICATOR OVERRIDE
    Move to top-right corner (out of the way)

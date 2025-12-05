@@ -17,6 +17,7 @@ import NanoNote from "./NanoNote";
 import { Toolbar, NoteTemplate } from "./Toolbar";
 import { useSyncedCanvas, ConnectionStatus } from "@/hooks/useSyncedCanvas";
 import { useYjs } from "@/hooks/useYjs";
+import { useToast } from "@/components/ui/Toast";
 import type { NanoNoteNode, PopColor } from "@/lib/types";
 
 // Register custom node types
@@ -46,6 +47,9 @@ export default function SyncedBoard() {
     const [isGenerating, setIsGenerating] = useState(false);
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
+    // Toast notifications for status and errors
+    const { showToast, dismissToast } = useToast();
+
     // Local node state for smooth dragging
     const [localNodes, setLocalNodes] = useState<NanoNoteNode[]>([]);
 
@@ -60,6 +64,16 @@ export default function SyncedBoard() {
             style: { stroke: "#111111", strokeWidth: 2 },
         }));
     }, [syncedEdges]);
+
+    // Show toast notifications for connection status changes
+    useEffect(() => {
+        if (connectionStatus === "disconnected") {
+            showToast("Connection lost. Reconnecting...", "error", 0); // 0 = no auto-dismiss
+        } else if (connectionStatus === "connected" && isSynced) {
+            // Dismiss any "disconnected" toasts and show success briefly
+            showToast("Synced and ready!", "success", 2000);
+        }
+    }, [connectionStatus, isSynced, showToast]);
 
     // Sync notes from Y.js to local state (for smooth dragging)
     useEffect(() => {
@@ -138,7 +152,7 @@ export default function SyncedBoard() {
         const noteContent = yText?.toString() || "";
 
         if (!noteContent.trim()) {
-            alert("Please add some content to the note first!");
+            showToast("Please add some content to the note first", "info");
             return;
         }
 
@@ -232,11 +246,14 @@ export default function SyncedBoard() {
             });
         } catch (error) {
             console.error("AI generation error:", error);
-            alert(error instanceof Error ? error.message : "Failed to generate ideas");
+            showToast(
+                error instanceof Error ? error.message : "Failed to generate ideas. Please try again.",
+                "error"
+            );
         } finally {
             setIsGenerating(false);
         }
-    }, [selectedNodeId, localNodes, addNote, updateNoteContent, addEdge, isGenerating, doc]);
+    }, [selectedNodeId, localNodes, addNote, updateNoteContent, addEdge, isGenerating, doc, showToast]);
 
     // Export as PNG
     const handleExportPNG = useCallback(async () => {
