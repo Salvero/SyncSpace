@@ -46,7 +46,7 @@ function ShareButton({ roomId }: { roomId: string }) {
 const SyncedBoard = dynamic(() => import("@/components/canvas/SyncedBoard"), {
     ssr: false,
     loading: () => (
-        <div className="w-full h-screen flex items-center justify-center bg-[var(--color-canvas)] bg-dot-pattern">
+        <div className="w-full h-screen flex items-center justify-center bg-mesh bg-dot-pattern">
             <div className="flex flex-col items-center gap-4">
                 <div className="w-12 h-12 border-4 border-[var(--color-ink)] border-t-transparent animate-spin" />
                 <span className="font-display text-lg">Loading Canvas...</span>
@@ -75,7 +75,7 @@ function CollaborativeCanvas({ roomId }: { roomId: string }) {
 
     return (
         <div
-            className="w-full h-screen bg-[var(--color-canvas)] overflow-hidden"
+            className="w-full h-screen bg-mesh overflow-hidden"
             onPointerMove={handlePointerMove}
             onPointerLeave={handlePointerLeave}
         >

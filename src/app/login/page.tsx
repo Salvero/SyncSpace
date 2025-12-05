@@ -49,7 +49,7 @@ export default function LoginPage() {
     };
 
     return (
-        <main className="min-h-screen bg-[var(--color-canvas)] bg-dot-pattern flex items-center justify-center p-8">
+        <main className="min-h-screen bg-mesh bg-dot-pattern flex items-center justify-center p-8">
             <div className="w-full max-w-md">
                 {/* Header */}
                 <div className="flex flex-col items-center mb-8">
@@ -70,8 +70,8 @@ export default function LoginPage() {
                     {error && (
                         <div
                             className={`mb-4 p-3 border-2 border-[var(--color-ink)] text-sm ${error.includes("Check your email")
-                                    ? "bg-green-100"
-                                    : "bg-red-100"
+                                ? "bg-green-100"
+                                : "bg-red-100"
                                 }`}
                         >
                             {error}
