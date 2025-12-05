@@ -10,6 +10,7 @@ import {
 } from "@/lib/liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { YjsProvider } from "@/hooks/useYjs";
+import type { PopColor } from "@/lib/types";
 
 interface RoomProps {
     roomId: string;
@@ -69,12 +70,12 @@ export function useCursorPresence() {
             y: user.presence.cursor!.y,
             // Get name/color from userInfo (set by auth endpoint) or presence
             name: user.info?.name || user.presence.name,
-            color: (user.info?.color || user.presence.color) as "yellow" | "blue" | "pink",
+            color: (user.info?.color || user.presence.color) as PopColor,
         }));
 
     // Get own info from userInfo (set by auth endpoint)
     const myName = self?.info?.name || self?.presence.name || "You";
-    const myColor = (self?.info?.color || self?.presence.color || "yellow") as "yellow" | "blue" | "pink";
+    const myColor = (self?.info?.color || self?.presence.color || "yellow") as PopColor;
 
     return {
         handlePointerMove,

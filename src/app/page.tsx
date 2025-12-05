@@ -15,7 +15,7 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-[var(--color-canvas)] bg-dot-pattern flex flex-col items-center justify-center p-8">
+    <main className="min-h-screen bg-mesh bg-dot-pattern flex flex-col items-center justify-center p-8">
       {/* User Menu - Top Right */}
       <div className="absolute top-6 right-6">
         <UserMenu />

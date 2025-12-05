@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { v4 as uuidv4 } from "uuid";
-import type { NanoNoteNode } from "@/lib/types";
+import type { NanoNoteNode, PopColor } from "@/lib/types";
 
 interface HistoryState {
     nodes: NanoNoteNode[];
@@ -18,9 +18,9 @@ interface CanvasStore {
     historyIndex: number;
 
     // Actions
-    addNote: (x?: number, y?: number, color?: "yellow" | "blue" | "pink") => string;
+    addNote: (x?: number, y?: number, color?: PopColor) => string;
     updateNoteContent: (id: string, content: string) => void;
-    updateNoteColor: (id: string, color: "yellow" | "blue" | "pink") => void;
+    updateNoteColor: (id: string, color: PopColor) => void;
     updateNotePosition: (id: string, x: number, y: number) => void;
     deleteNote: (id: string) => void;
     setSelectedNode: (id: string | null) => void;

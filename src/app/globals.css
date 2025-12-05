@@ -11,10 +11,13 @@
   --color-canvas: #FFFFFF;
   --color-ink: #111111;
 
-  /* Pop Colors */
+  /* Pop Colors - Extended palette */
   --color-pop-yellow: #FFE600;
   --color-pop-blue: #3B82F6;
   --color-pop-pink: #EC4899;
+  --color-pop-green: #10B981;
+  --color-pop-purple: #8B5CF6;
+  --color-pop-orange: #F97316;
 
   /* Hard Design Tokens */
   --shadow-hard: 4px 4px 0px 0px #000000;
@@ -35,6 +38,9 @@
   --color-pop-yellow: var(--color-pop-yellow);
   --color-pop-blue: var(--color-pop-blue);
   --color-pop-pink: var(--color-pop-pink);
+  --color-pop-green: var(--color-pop-green);
+  --color-pop-purple: var(--color-pop-purple);
+  --color-pop-orange: var(--color-pop-orange);
   --shadow-hard: var(--shadow-hard);
   --shadow-hard-sm: var(--shadow-hard-sm);
   --font-ui: var(--font-ui);
@@ -68,9 +74,46 @@ body {
 }
 
 /* ========================================
-   DOT PATTERN GRID BACKGROUND
+   MODERN GRADIENT BACKGROUNDS
 ======================================== */
 
+/* Animated gradient background for home page */
+.bg-gradient-animated {
+  background: linear-gradient(135deg,
+      #fef3c7 0%,
+      #fce7f3 25%,
+      #dbeafe 50%,
+      #f3e8ff 75%,
+      #dcfce7 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Mesh gradient for premium look */
+.bg-mesh {
+  background-color: #fefefe;
+  background-image:
+    radial-gradient(at 40% 20%, rgba(255, 230, 0, 0.15) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, rgba(236, 72, 153, 0.12) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, rgba(59, 130, 246, 0.1) 0px, transparent 50%),
+    radial-gradient(at 80% 50%, rgba(139, 92, 246, 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 50%),
+    radial-gradient(at 80% 100%, rgba(249, 115, 22, 0.08) 0px, transparent 50%);
+}
+
+/* Dot pattern over gradient */
 .bg-dot-pattern {
   background-image: radial-gradient(circle, #00000015 1.5px, transparent 1.5px);
   background-size: 24px 24px;

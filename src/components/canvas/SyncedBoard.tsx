@@ -208,7 +208,14 @@ export default function SyncedBoard() {
 
             console.log("Parsed ideas:", ideas);
 
-            const colors: PopColor[] = ["yellow", "blue", "pink"];
+            // Use different colors from the parent note for AI-generated notes
+            const getVariedColor = (index: number): PopColor => {
+                const allColors: PopColor[] = ["yellow", "blue", "pink", "green", "purple", "orange"];
+                const parentColor = selectedNode.data.color || "yellow";
+                const otherColors = allColors.filter(c => c !== parentColor);
+                return otherColors[index % otherColors.length];
+            };
+
             const positions = [
                 { x: selectedNode.position.x - 220, y: selectedNode.position.y + 180 },
                 { x: selectedNode.position.x, y: selectedNode.position.y + 220 },
@@ -216,7 +223,7 @@ export default function SyncedBoard() {
             ];
 
             ideas.slice(0, 3).forEach((idea, i) => {
-                const newId = addNote(positions[i].x, positions[i].y, colors[i]);
+                const newId = addNote(positions[i].x, positions[i].y, getVariedColor(i));
                 console.log("Created note:", newId, "with idea:", idea);
                 setTimeout(() => {
                     updateNoteContent(newId, idea);

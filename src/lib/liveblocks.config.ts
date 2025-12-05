@@ -2,6 +2,7 @@
 
 import { createClient } from "@liveblocks/client";
 import { createRoomContext, createLiveblocksContext } from "@liveblocks/react";
+import type { PopColor } from "./types";
 
 /**
  * Liveblocks Client Configuration
@@ -21,7 +22,7 @@ const client = createClient({
 type Presence = {
     cursor: { x: number; y: number } | null;
     name: string;
-    color: "yellow" | "blue" | "pink";
+    color: PopColor;
 };
 
 // Storage type - shared state synced across all users
@@ -35,7 +36,7 @@ type UserMeta = {
     id: string;
     info: {
         name: string;
-        color: "yellow" | "blue" | "pink";
+        color: PopColor;
     };
 };
 

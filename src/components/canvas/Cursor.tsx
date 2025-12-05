@@ -2,12 +2,13 @@
 
 import React, { memo } from "react";
 import { getPopColorValue } from "@/lib/utils";
+import type { PopColor } from "@/lib/types";
 
 interface CursorProps {
     x: number;
     y: number;
     name: string;
-    color: "yellow" | "blue" | "pink";
+    color: PopColor;
 }
 
 export const Cursor = memo(function Cursor({ x, y, name, color }: CursorProps) {
@@ -38,7 +39,7 @@ export const Cursor = memo(function Cursor({ x, y, name, color }: CursorProps) {
                 className="absolute left-4 top-4 px-2 py-0.5 text-xs font-medium whitespace-nowrap border-2 border-[var(--color-ink)] shadow-[2px_2px_0px_0px_#000000]"
                 style={{
                     backgroundColor: colorValue,
-                    color: color === "blue" || color === "pink" ? "white" : "#111111",
+                    color: ["blue", "pink", "purple"].includes(color) ? "white" : "#111111",
                 }}
             >
                 {name}
@@ -56,7 +57,7 @@ interface CursorsOverlayProps {
         x: number;
         y: number;
         name: string;
-        color: "yellow" | "blue" | "pink";
+        color: PopColor;
     }>;
 }
 
@@ -83,7 +84,7 @@ CursorsOverlay.displayName = "CursorsOverlay";
 // Presence indicator showing current user and others count
 interface PresenceIndicatorProps {
     myName: string;
-    myColor: "yellow" | "blue" | "pink";
+    myColor: PopColor;
     othersCount: number;
 }
 
@@ -101,7 +102,7 @@ export const PresenceIndicator = memo(function PresenceIndicator({
                 className="flex items-center gap-2 px-3 py-1.5 border-2 border-[var(--color-ink)] shadow-[2px_2px_0px_0px_#000000]"
                 style={{
                     backgroundColor: colorValue,
-                    color: myColor === "blue" || myColor === "pink" ? "white" : "#111111",
+                    color: ["blue", "pink", "purple"].includes(myColor) ? "white" : "#111111",
                 }}
             >
                 <span className="text-sm font-medium">You: {myName}</span>

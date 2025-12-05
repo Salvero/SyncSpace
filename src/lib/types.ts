@@ -1,5 +1,5 @@
 // Pop colors used throughout the app
-export type PopColor = "yellow" | "blue" | "pink";
+export type PopColor = "yellow" | "blue" | "pink" | "green" | "purple" | "orange";
 
 // NanoNote type - the core data structure for canvas notes
 export interface NanoNote {

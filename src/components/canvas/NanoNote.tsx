@@ -7,16 +7,19 @@ import { useSyncedNoteContent } from "@/hooks/useYjs";
 
 interface NanoNoteData {
     content: string;
-    color: "yellow" | "blue" | "pink";
+    color: "yellow" | "blue" | "pink" | "green" | "purple" | "orange";
     onContentChange?: (id: string, content: string) => void;
-    onColorChange?: (id: string, color: "yellow" | "blue" | "pink") => void;
+    onColorChange?: (id: string, color: "yellow" | "blue" | "pink" | "green" | "purple" | "orange") => void;
     onDelete?: (id: string) => void;
 }
 
-const colorClasses = {
+const colorClasses: Record<string, string> = {
     yellow: "bg-[var(--color-pop-yellow)]",
     blue: "bg-[var(--color-pop-blue)]",
     pink: "bg-[var(--color-pop-pink)]",
+    green: "bg-[var(--color-pop-green)]",
+    purple: "bg-[var(--color-pop-purple)]",
+    orange: "bg-[var(--color-pop-orange)]",
 };
 
 const NanoNote = memo(function NanoNote({ id, data, selected }: NodeProps) {
@@ -45,7 +48,7 @@ const NanoNote = memo(function NanoNote({ id, data, selected }: NodeProps) {
     );
 
     const handleColorChange = useCallback(
-        (newColor: "yellow" | "blue" | "pink") => {
+        (newColor: "yellow" | "blue" | "pink" | "green" | "purple" | "orange") => {
             noteData.onColorChange?.(id, newColor);
             setShowColorPicker(false);
         },
@@ -122,8 +125,8 @@ const NanoNote = memo(function NanoNote({ id, data, selected }: NodeProps) {
 
             {/* Color picker dropdown */}
             {showColorPicker && (
-                <div className="absolute top-8 left-2 z-10 flex gap-1 p-1 bg-[var(--color-canvas)] border-2 border-[var(--color-ink)] shadow-[2px_2px_0px_0px_#000000]">
-                    {(["yellow", "blue", "pink"] as const).map((color) => (
+                <div className="absolute top-8 left-2 z-10 flex flex-wrap gap-1 p-1 bg-[var(--color-canvas)] border-2 border-[var(--color-ink)] shadow-[2px_2px_0px_0px_#000000] max-w-[96px]">
+                    {(["yellow", "blue", "pink", "green", "purple", "orange"] as const).map((color) => (
                         <button
                             key={color}
                             onClick={() => handleColorChange(color)}

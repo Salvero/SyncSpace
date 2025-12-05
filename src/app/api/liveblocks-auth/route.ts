@@ -2,6 +2,7 @@ import { Liveblocks } from "@liveblocks/node";
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateNanoName, getRandomPopColor } from "@/lib/utils";
+import type { PopColor } from "@/lib/types";
 
 /**
  * Liveblocks Authentication Endpoint
@@ -39,15 +40,15 @@ export async function POST(request: NextRequest) {
 
         let sessionId: string;
         let userName: string;
-        let userColor: "yellow" | "blue" | "pink";
+        let userColor: PopColor;
 
         if (user) {
             // Authenticated user - use their info
             sessionId = user.id;
             userName = user.email?.split("@")[0] || generateNanoName();
             // Generate consistent color based on user ID
-            const colors: Array<"yellow" | "blue" | "pink"> = ["yellow", "blue", "pink"];
-            userColor = colors[user.email?.charCodeAt(0) ?? 0 % 3];
+            const colors: PopColor[] = ["yellow", "blue", "pink", "green", "purple", "orange"];
+            userColor = colors[(user.email?.charCodeAt(0) ?? 0) % colors.length];
         } else {
             // Anonymous user - generate random info
             sessionId = `anon-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
