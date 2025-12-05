@@ -1,11 +1,21 @@
 "use client";
 
-import React, { memo } from "react";
+import React, { memo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
+// Template types with colors
+const NOTE_TEMPLATES = [
+    { id: "blank", label: "Blank Note", icon: "📝", color: "yellow" as const, content: "" },
+    { id: "idea", label: "💡 Idea", icon: "💡", color: "yellow" as const, content: "💡 Idea:\n" },
+    { id: "question", label: "❓ Question", icon: "❓", color: "blue" as const, content: "❓ Question:\n" },
+    { id: "task", label: "✅ Task", icon: "✅", color: "pink" as const, content: "✅ Task:\n" },
+] as const;
+
+export type NoteTemplate = typeof NOTE_TEMPLATES[number];
+
 interface ToolbarProps {
-    onAddNote: () => void;
+    onAddNote: (template?: NoteTemplate) => void;
     onUndo: () => void;
     onRedo: () => void;
     onMagic?: () => void;
@@ -59,6 +69,20 @@ const ExportIcon = () => (
     </svg>
 );
 
+const ChevronIcon = ({ open }: { open: boolean }) => (
+    <svg
+        width="12"
+        height="12"
+        viewBox="0 0 12 12"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        className={`transition-transform ${open ? "rotate-180" : ""}`}
+    >
+        <path d="M3 5L6 8L9 5" />
+    </svg>
+);
+
 export const Toolbar = memo(function Toolbar({
     onAddNote,
     onUndo,
@@ -70,6 +94,8 @@ export const Toolbar = memo(function Toolbar({
     selectedNodeId,
     isGenerating = false,
 }: ToolbarProps) {
+    const [showTemplates, setShowTemplates] = useState(false);
+
     return (
         <div
             className={cn(
@@ -81,17 +107,51 @@ export const Toolbar = memo(function Toolbar({
             role="toolbar"
             aria-label="Canvas toolbar"
         >
-            {/* Add Note */}
-            <Button
-                onClick={onAddNote}
-                variant="yellow"
-                size="sm"
-                aria-label="Add new note (N)"
-                title="Add Note (N)"
-            >
-                <PlusIcon />
-                <span className="hidden sm:inline">Note</span>
-            </Button>
+            {/* Add Note with Templates Dropdown */}
+            <div className="relative">
+                <div className="flex">
+                    <Button
+                        onClick={() => onAddNote()}
+                        variant="yellow"
+                        size="sm"
+                        aria-label="Add new note (N)"
+                        title="Add Note (N)"
+                        className="rounded-r-none border-r-0"
+                    >
+                        <PlusIcon />
+                        <span className="hidden sm:inline">Note</span>
+                    </Button>
+                    <Button
+                        onClick={() => setShowTemplates(!showTemplates)}
+                        variant="yellow"
+                        size="sm"
+                        aria-label="Choose template"
+                        title="Choose template"
+                        className="rounded-l-none px-1.5"
+                    >
+                        <ChevronIcon open={showTemplates} />
+                    </Button>
+                </div>
+
+                {/* Templates Dropdown */}
+                {showTemplates && (
+                    <div className="absolute bottom-full mb-2 left-0 bg-[var(--color-canvas)] border-2 border-[var(--color-ink)] shadow-[3px_3px_0px_0px_#000000] min-w-[140px]">
+                        {NOTE_TEMPLATES.map((template) => (
+                            <button
+                                key={template.id}
+                                onClick={() => {
+                                    onAddNote(template);
+                                    setShowTemplates(false);
+                                }}
+                                className="w-full px-3 py-2 text-left text-sm hover:bg-[var(--color-ink)]/10 transition-colors flex items-center gap-2"
+                            >
+                                <span>{template.icon}</span>
+                                <span>{template.id === "blank" ? "Blank Note" : template.id.charAt(0).toUpperCase() + template.id.slice(1)}</span>
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
 
             {/* Divider */}
             <div className="w-px h-6 bg-[var(--color-ink)]/30" />

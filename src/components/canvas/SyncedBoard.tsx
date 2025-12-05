@@ -14,7 +14,7 @@ import {
 import "@xyflow/react/dist/style.css";
 
 import NanoNote from "./NanoNote";
-import { Toolbar } from "./Toolbar";
+import { Toolbar, NoteTemplate } from "./Toolbar";
 import { useSyncedCanvas, ConnectionStatus } from "@/hooks/useSyncedCanvas";
 import { useYjs } from "@/hooks/useYjs";
 import type { NanoNoteNode, PopColor } from "@/lib/types";
@@ -109,12 +109,18 @@ export default function SyncedBoard() {
         [addEdge]
     );
 
-    // Add note at random position
-    const handleAddNote = useCallback(() => {
+    // Add note at random position with optional template
+    const handleAddNote = useCallback((template?: NoteTemplate) => {
         const x = 200 + Math.random() * 300;
         const y = 200 + Math.random() * 200;
-        addNote(x, y);
-    }, [addNote]);
+        const color = template?.color || "yellow";
+        const id = addNote(x, y, color);
+
+        // If template has content, set it
+        if (template?.content && id) {
+            updateNoteContent(id, template.content);
+        }
+    }, [addNote, updateNoteContent]);
 
     // Magic (AI) functionality
     const handleMagic = useCallback(async () => {
