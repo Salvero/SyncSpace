@@ -254,8 +254,10 @@ body {
 }
 
 .react-flow__edge-path {
-  stroke: var(--color-ink) !important;
+  stroke: #374151 !important;
   stroke-width: 2px !important;
+  stroke-linecap: round !important;
+  fill: none !important;
 }
 
 .react-flow__controls {
@@ -339,6 +341,27 @@ body {
 
 .animate-shake {
   animation: shake 200ms ease-in-out;
+}
+
+/* Pop-in animation for Magic button */
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  50% {
+    transform: scale(1.15);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-pop-in {
+  animation: pop-in 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* Toast slide-in animation */
