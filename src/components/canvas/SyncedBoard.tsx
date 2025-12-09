@@ -10,11 +10,13 @@ import {
     NodeChange,
     BackgroundVariant,
     applyNodeChanges,
+    useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
 import NanoNote from "./NanoNote";
 import { Toolbar, NoteTemplate } from "./Toolbar";
+import { NotesNavigator } from "./NotesNavigator";
 import { useSyncedCanvas, ConnectionStatus } from "@/hooks/useSyncedCanvas";
 import { useYjs } from "@/hooks/useYjs";
 import { useToast } from "@/components/ui/Toast";
@@ -46,6 +48,11 @@ export default function SyncedBoard() {
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
+    const reactFlowInstance = useRef<any>(null);
+
+    // Track dragging state for group movement
+    const draggingNodeRef = useRef<string | null>(null);
+    const dragStartPositionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
 
     // Toast notifications for status and errors
     const { showToast, dismissToast } = useToast();
@@ -53,17 +60,54 @@ export default function SyncedBoard() {
     // Local node state for smooth dragging
     const [localNodes, setLocalNodes] = useState<NanoNoteNode[]>([]);
 
-    // Convert synced edges to React Flow format with mind-map styling
+    // Convert synced edges to React Flow format with smooth curved lines
     const flowEdges: Edge[] = useMemo(() => {
         return syncedEdges.map((edge) => ({
             id: edge.id,
             source: edge.source,
             target: edge.target,
-            type: "smoothstep",
-            animated: true,
-            style: { stroke: "#111111", strokeWidth: 2 },
+            type: "bezier",
+            style: {
+                stroke: "#374151",
+                strokeWidth: 2,
+                strokeLinecap: "round" as const,
+            },
         }));
     }, [syncedEdges]);
+
+    // Create note items for the navigator (only yellow parent notes)
+    const noteItems = useMemo(() => {
+        // Filter to only show yellow notes (parent notes)
+        return localNodes
+            .filter((node) => node.data.color === "yellow")
+            .map((node) => {
+                // Get the first line or first 30 chars as title
+                const content = node.data.content || "";
+                const firstLine = content.split("\n")[0].trim();
+                const title = firstLine.slice(0, 35) || "Untitled";
+
+                return {
+                    id: node.id,
+                    title: title + (firstLine.length > 35 ? "..." : ""),
+                    color: node.data.color || "yellow",
+                };
+            });
+    }, [localNodes]);
+
+    // Navigate to a specific note (center view on it)
+    const handleNavigateToNote = useCallback((noteId: string) => {
+        const node = localNodes.find((n) => n.id === noteId);
+        if (node && reactFlowInstance.current) {
+            // Center on the node with animation
+            reactFlowInstance.current.setCenter(
+                node.position.x + 160, // Offset to center the note
+                node.position.y + 100,
+                { zoom: 1, duration: 500 }
+            );
+            // Select the node
+            setSelectedNodeId(noteId);
+        }
+    }, [localNodes]);
 
     // Show toast notifications for connection status changes
     useEffect(() => {
@@ -74,6 +118,25 @@ export default function SyncedBoard() {
             showToast("Synced and ready!", "success", 2000);
         }
     }, [connectionStatus, isSynced, showToast]);
+
+    // Get all nodes connected to a given node (both children and descendants)
+    const getConnectedNodeIds = useCallback((nodeId: string): Set<string> => {
+        const connected = new Set<string>();
+        const queue = [nodeId];
+
+        while (queue.length > 0) {
+            const currentId = queue.shift()!;
+            // Find all edges where this node is the source (parent)
+            syncedEdges.forEach((edge) => {
+                if (edge.source === currentId && !connected.has(edge.target)) {
+                    connected.add(edge.target);
+                    queue.push(edge.target);
+                }
+            });
+        }
+
+        return connected;
+    }, [syncedEdges]);
 
     // Sync notes from Y.js to local state (for smooth dragging)
     useEffect(() => {
@@ -89,28 +152,95 @@ export default function SyncedBoard() {
         setLocalNodes(flowNodes);
     }, [notes, updateNoteContent, updateNoteColor, deleteNote]);
 
-    // Handle node changes (position, selection) with smooth local updates
+    // Handle node changes (position, selection) with smooth local updates and GROUP MOVEMENT
     const onNodesChange = useCallback(
         (changes: NodeChange<NanoNoteNode>[]) => {
-            // Apply changes locally for smooth dragging
-            setLocalNodes((nds) => applyNodeChanges(changes, nds));
+            setLocalNodes((currentNodes) => {
+                let updatedNodes = applyNodeChanges(changes, currentNodes);
 
-            // Handle specific change types
-            changes.forEach((change) => {
-                if (change.type === "position" && change.position && !change.dragging) {
-                    // Only sync to Y.js when drag ends
-                    updateNotePosition(change.id, change.position.x, change.position.y);
-                }
-                if (change.type === "select") {
-                    if (change.selected) {
-                        setSelectedNodeId(change.id);
-                    } else if (selectedNodeId === change.id) {
-                        setSelectedNodeId(null);
+                // Handle group movement for connected nodes
+                changes.forEach((change) => {
+                    if (change.type === "position") {
+                        // Detect drag start
+                        if (change.dragging && !draggingNodeRef.current) {
+                            draggingNodeRef.current = change.id;
+                            // Store initial positions of dragged node and all connected nodes
+                            const connectedIds = getConnectedNodeIds(change.id);
+                            dragStartPositionsRef.current.clear();
+
+                            currentNodes.forEach((node) => {
+                                if (node.id === change.id || connectedIds.has(node.id)) {
+                                    dragStartPositionsRef.current.set(node.id, {
+                                        x: node.position.x,
+                                        y: node.position.y,
+                                    });
+                                }
+                            });
+                        }
+
+                        // During drag - move connected nodes together
+                        if (change.dragging && change.position && draggingNodeRef.current === change.id) {
+                            const startPos = dragStartPositionsRef.current.get(change.id);
+                            if (startPos) {
+                                const deltaX = change.position.x - startPos.x;
+                                const deltaY = change.position.y - startPos.y;
+
+                                // Apply delta to all connected nodes
+                                updatedNodes = updatedNodes.map((node) => {
+                                    if (node.id === change.id) return node; // Already moved by applyNodeChanges
+                                    const nodeStartPos = dragStartPositionsRef.current.get(node.id);
+                                    if (nodeStartPos) {
+                                        return {
+                                            ...node,
+                                            position: {
+                                                x: nodeStartPos.x + deltaX,
+                                                y: nodeStartPos.y + deltaY,
+                                            },
+                                        };
+                                    }
+                                    return node;
+                                });
+                            }
+                        }
+
+                        // Drag end - sync all moved positions to Y.js
+                        if (!change.dragging && draggingNodeRef.current === change.id) {
+                            // Sync the main dragged node
+                            const draggedNode = updatedNodes.find((n) => n.id === change.id);
+                            if (draggedNode) {
+                                updateNotePosition(change.id, draggedNode.position.x, draggedNode.position.y);
+                            }
+
+                            // Sync all connected nodes
+                            dragStartPositionsRef.current.forEach((_, nodeId) => {
+                                if (nodeId !== change.id) {
+                                    const node = updatedNodes.find((n) => n.id === nodeId);
+                                    if (node) {
+                                        updateNotePosition(nodeId, node.position.x, node.position.y);
+                                    }
+                                }
+                            });
+
+                            // Clear drag state
+                            draggingNodeRef.current = null;
+                            dragStartPositionsRef.current.clear();
+                        }
                     }
-                }
+
+                    // Handle selection
+                    if (change.type === "select") {
+                        if (change.selected) {
+                            setSelectedNodeId(change.id);
+                        } else if (selectedNodeId === change.id) {
+                            setSelectedNodeId(null);
+                        }
+                    }
+                });
+
+                return updatedNodes;
             });
         },
-        [updateNotePosition, selectedNodeId]
+        [updateNotePosition, selectedNodeId, getConnectedNodeIds]
     );
 
     // Handle edge connections
@@ -123,10 +253,100 @@ export default function SyncedBoard() {
         [addEdge]
     );
 
-    // Add note at random position with optional template
+    // Find a position that doesn't overlap with existing notes
+    const findEmptyPosition = useCallback(() => {
+        // Use generous sizes to account for notes with lots of content
+        const NOTE_WIDTH = 320;
+        const NOTE_HEIGHT = 280;
+        const PADDING = 60;
+
+        // If no notes exist, use the start position
+        if (localNodes.length === 0) {
+            return { x: 200, y: 150 };
+        }
+
+        // Get bounding boxes for all existing notes with extra margin
+        const existingBoxes = localNodes.map((node) => ({
+            left: node.position.x - PADDING,
+            right: node.position.x + NOTE_WIDTH + PADDING,
+            top: node.position.y - PADDING,
+            bottom: node.position.y + NOTE_HEIGHT + PADDING,
+        }));
+
+        // Check if a position overlaps with any existing note
+        const isOverlapping = (x: number, y: number) => {
+            const newBox = {
+                left: x,
+                right: x + NOTE_WIDTH,
+                top: y,
+                bottom: y + NOTE_HEIGHT,
+            };
+            return existingBoxes.some((box) => {
+                return !(newBox.right < box.left ||
+                    newBox.left > box.right ||
+                    newBox.bottom < box.top ||
+                    newBox.top > box.bottom);
+            });
+        };
+
+        // Find the bounding box of all existing notes
+        const minX = Math.min(...localNodes.map((n) => n.position.x));
+        const maxX = Math.max(...localNodes.map((n) => n.position.x));
+        const minY = Math.min(...localNodes.map((n) => n.position.y));
+        const maxY = Math.max(...localNodes.map((n) => n.position.y));
+
+        // Try positions around the perimeter of existing notes first
+        const positions = [
+            // Right side
+            { x: maxX + NOTE_WIDTH + PADDING, y: minY },
+            { x: maxX + NOTE_WIDTH + PADDING, y: (minY + maxY) / 2 },
+            { x: maxX + NOTE_WIDTH + PADDING, y: maxY },
+            // Left side
+            { x: minX - NOTE_WIDTH - PADDING, y: minY },
+            { x: minX - NOTE_WIDTH - PADDING, y: (minY + maxY) / 2 },
+            { x: minX - NOTE_WIDTH - PADDING, y: maxY },
+            // Top
+            { x: minX, y: minY - NOTE_HEIGHT - PADDING },
+            { x: (minX + maxX) / 2, y: minY - NOTE_HEIGHT - PADDING },
+            { x: maxX, y: minY - NOTE_HEIGHT - PADDING },
+            // Bottom
+            { x: minX, y: maxY + NOTE_HEIGHT + PADDING },
+            { x: (minX + maxX) / 2, y: maxY + NOTE_HEIGHT + PADDING },
+            { x: maxX, y: maxY + NOTE_HEIGHT + PADDING },
+        ];
+
+        // Try each position
+        for (const pos of positions) {
+            if (!isOverlapping(pos.x, pos.y)) {
+                return pos;
+            }
+        }
+
+        // If all perimeter positions are taken, search in a grid pattern further out
+        const GRID_STEP = NOTE_WIDTH + PADDING;
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+
+        for (let ring = 2; ring <= 15; ring++) {
+            // Try positions in expanding rings
+            for (let i = 0; i < ring * 8; i++) {
+                const angle = (i / (ring * 8)) * Math.PI * 2;
+                const testX = centerX + Math.cos(angle) * ring * GRID_STEP;
+                const testY = centerY + Math.sin(angle) * ring * GRID_STEP;
+
+                if (!isOverlapping(testX, testY)) {
+                    return { x: testX, y: testY };
+                }
+            }
+        }
+
+        // Ultimate fallback: place far to the right
+        return { x: maxX + NOTE_WIDTH * 2 + PADDING * 2, y: minY };
+    }, [localNodes]);
+
+    // Add note at an empty position with optional template
     const handleAddNote = useCallback((template?: NoteTemplate) => {
-        const x = 200 + Math.random() * 300;
-        const y = 200 + Math.random() * 200;
+        const { x, y } = findEmptyPosition();
         const color = template?.color || "yellow";
         const id = addNote(x, y, color);
 
@@ -134,7 +354,23 @@ export default function SyncedBoard() {
         if (template?.content && id) {
             updateNoteContent(id, template.content);
         }
-    }, [addNote, updateNoteContent]);
+
+        // Auto-select the new note so Magic button works immediately
+        if (id) {
+            setSelectedNodeId(id);
+        }
+
+        // Auto zoom out to fit all notes after a short delay
+        setTimeout(() => {
+            if (reactFlowInstance.current) {
+                reactFlowInstance.current.fitView({
+                    padding: 0.3,
+                    duration: 400,
+                    maxZoom: 1.5,
+                });
+            }
+        }, 100);
+    }, [addNote, updateNoteContent, findEmptyPosition]);
 
     // Magic (AI) functionality
     const handleMagic = useCallback(async () => {
@@ -152,7 +388,7 @@ export default function SyncedBoard() {
         const noteContent = yText?.toString() || "";
 
         if (!noteContent.trim()) {
-            showToast("Please add some content to the note first", "info");
+            showToast("Type something in the note first, then click Magic!", "info");
             return;
         }
 
@@ -366,13 +602,15 @@ export default function SyncedBoard() {
                 edges={flowEdges}
                 onNodesChange={onNodesChange}
                 onConnect={onConnect}
+                onInit={(instance) => { reactFlowInstance.current = instance; }}
                 nodeTypes={nodeTypes}
                 fitView
                 fitViewOptions={{ padding: 0.5 }}
                 minZoom={0.1}
                 maxZoom={2}
                 defaultEdgeOptions={{
-                    style: { stroke: "#111111", strokeWidth: 2 },
+                    type: "bezier",
+                    style: { stroke: "#374151", strokeWidth: 2, strokeLinecap: "round" },
                 }}
                 proOptions={{ hideAttribution: true }}
             >
@@ -477,6 +715,13 @@ export default function SyncedBoard() {
                     </div>
                 </div>
             )}
+
+            {/* Notes Navigator Panel */}
+            <NotesNavigator
+                notes={noteItems}
+                onNavigateToNote={handleNavigateToNote}
+                selectedNoteId={selectedNodeId}
+            />
 
             {/* Toolbar */}
             <Toolbar
