@@ -160,7 +160,7 @@ export function useSyncedCanvas() {
         [doc]
     );
 
-    // Delete a note
+    // Delete a note and all its descendants (cascade delete)
     const deleteNote = useCallback(
         (id: string) => {
             if (!doc) return;
@@ -168,20 +168,49 @@ export function useSyncedCanvas() {
             const yNotes = doc.getArray<YNoteData>("notes");
             const yEdges = doc.getArray<YEdgeData>("edges");
 
-            doc.transact(() => {
-                // Delete the note metadata
-                const noteIndex = yNotes.toArray().findIndex((n) => n.id === id);
-                if (noteIndex !== -1) {
-                    yNotes.delete(noteIndex, 1);
+            // Find all descendant notes (children, grandchildren, etc.)
+            const getAllDescendants = (noteId: string): string[] => {
+                const descendants: string[] = [];
+                const edgesArray = yEdges.toArray();
+
+                // Find direct children (notes where this note is the source)
+                const childIds = edgesArray
+                    .filter((e) => e.source === noteId)
+                    .map((e) => e.target);
+
+                for (const childId of childIds) {
+                    descendants.push(childId);
+                    // Recursively get descendants of children
+                    descendants.push(...getAllDescendants(childId));
                 }
 
-                // Delete the Y.Text content
-                deleteNoteText(doc, id);
+                return descendants;
+            };
 
-                // Delete connected edges
+            // Get all notes to delete (the note itself + all descendants)
+            const descendantIds = getAllDescendants(id);
+            const allNoteIdsToDelete = [id, ...descendantIds];
+
+            doc.transact(() => {
+                // Delete all notes (including descendants)
+                for (const noteId of allNoteIdsToDelete) {
+                    const noteIndex = yNotes.toArray().findIndex((n) => n.id === noteId);
+                    if (noteIndex !== -1) {
+                        yNotes.delete(noteIndex, 1);
+                    }
+
+                    // Delete the Y.Text content for each note
+                    deleteNoteText(doc, noteId);
+                }
+
+                // Delete all edges connected to any of the deleted notes
                 const edgesToDelete = yEdges
                     .toArray()
-                    .map((e, i) => (e.source === id || e.target === id ? i : -1))
+                    .map((e, i) =>
+                        allNoteIdsToDelete.includes(e.source) || allNoteIdsToDelete.includes(e.target)
+                            ? i
+                            : -1
+                    )
                     .filter((i) => i !== -1)
                     .reverse();
 
