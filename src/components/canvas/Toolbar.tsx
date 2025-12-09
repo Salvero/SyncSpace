@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo, useState } from "react";
+import React, { memo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
@@ -47,10 +47,10 @@ const RedoIcon = () => (
     </svg>
 );
 
-const MagicIcon = ({ spinning = false }: { spinning?: boolean }) => (
+const MagicIcon = ({ spinning = false, size = 16 }: { spinning?: boolean; size?: number }) => (
     <svg
-        width="16"
-        height="16"
+        width={size}
+        height={size}
         viewBox="0 0 16 16"
         fill="none"
         stroke="currentColor"
@@ -95,6 +95,28 @@ export const Toolbar = memo(function Toolbar({
     isGenerating = false,
 }: ToolbarProps) {
     const [showTemplates, setShowTemplates] = useState(false);
+    const [showMagicButton, setShowMagicButton] = useState(false);
+    const [magicAnimating, setMagicAnimating] = useState(false);
+
+    // Handle adding a note and showing the Magic button
+    const handleAddNote = (template?: NoteTemplate) => {
+        onAddNote(template);
+        setShowTemplates(false);
+
+        // Show Magic button with animation
+        setShowMagicButton(true);
+        setMagicAnimating(true);
+
+        // Remove animation class after it completes
+        setTimeout(() => setMagicAnimating(false), 400);
+    };
+
+    // Hide Magic button when no node is selected
+    useEffect(() => {
+        if (!selectedNodeId) {
+            setShowMagicButton(false);
+        }
+    }, [selectedNodeId]);
 
     return (
         <div
@@ -112,7 +134,7 @@ export const Toolbar = memo(function Toolbar({
             <div className="relative">
                 <div className="flex">
                     <Button
-                        onClick={() => onAddNote()}
+                        onClick={() => handleAddNote()}
                         variant="yellow"
                         size="sm"
                         aria-label="Add new note (N)"
@@ -140,10 +162,7 @@ export const Toolbar = memo(function Toolbar({
                         {NOTE_TEMPLATES.map((template) => (
                             <button
                                 key={template.id}
-                                onClick={() => {
-                                    onAddNote(template);
-                                    setShowTemplates(false);
-                                }}
+                                onClick={() => handleAddNote(template)}
                                 className="w-full px-3 py-2 text-left text-sm hover:bg-[var(--color-ink)]/10 transition-colors flex items-center gap-2"
                             >
                                 <span>{template.icon}</span>
@@ -184,21 +203,26 @@ export const Toolbar = memo(function Toolbar({
             {/* Divider - hidden on very small screens */}
             <div className="hidden xs:block w-px h-6 bg-[var(--color-ink)]/30" />
 
-            {/* Magic (AI) - only shown when a node is selected */}
-            <Button
-                onClick={onMagic}
-                variant="pink"
-                size="sm"
-                disabled={!selectedNodeId || isGenerating}
-                aria-label="AI Magic - Generate related ideas"
-                title="Magic (M)"
-                className={cn(
-                    isGenerating && "cursor-wait animate-pulse"
-                )}
-            >
-                <MagicIcon spinning={isGenerating} />
-                <span className="hidden sm:inline">{isGenerating ? "Thinking..." : "Magic"}</span>
-            </Button>
+            {/* Magic (AI) - shown with pop animation after adding a note */}
+            {showMagicButton && (
+                <Button
+                    onClick={onMagic}
+                    variant="pink"
+                    size="lg"
+                    disabled={!selectedNodeId || isGenerating}
+                    aria-label="AI Magic - Generate related ideas"
+                    title="Magic (M)"
+                    className={cn(
+                        "px-4 py-2.5 text-base font-semibold gap-2",
+                        "shadow-[4px_4px_0px_0px_#000000]",
+                        isGenerating && "cursor-wait animate-pulse",
+                        magicAnimating && "animate-pop-in"
+                    )}
+                >
+                    <MagicIcon spinning={isGenerating} size={20} />
+                    <span>{isGenerating ? "Thinking..." : "Magic"}</span>
+                </Button>
+            )}
 
             {/* Export */}
             <Button
