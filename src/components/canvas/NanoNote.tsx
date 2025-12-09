@@ -22,6 +22,13 @@ const colorClasses: Record<string, string> = {
     orange: "bg-[var(--color-pop-orange)]",
 };
 
+// Colors that need white text for better readability
+const darkColors = new Set(["blue", "pink", "green", "purple"]);
+
+const getTextColorClass = (color: string) => {
+    return darkColors.has(color) ? "text-white" : "text-[var(--color-ink)]";
+};
+
 const NanoNote = memo(function NanoNote({ id, data, selected }: NodeProps) {
     const noteData = data as unknown as NanoNoteData;
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -89,33 +96,52 @@ const NanoNote = memo(function NanoNote({ id, data, selected }: NodeProps) {
                 "relative min-w-[180px] max-w-[320px]",
                 "border-2 border-[var(--color-ink)]",
                 "shadow-[4px_4px_0px_0px_#000000]",
+                "rounded-sm",
                 colorClasses[noteData.color],
                 selected && "ring-2 ring-[var(--color-ink)] ring-offset-2"
             )}
             onDoubleClick={handleDoubleClick}
         >
             {/* Header with color picker and delete */}
-            <div className="flex items-center justify-between px-2 py-1 border-b border-[var(--color-ink)]">
-                {/* Color picker toggle - square with palette icon */}
+            <div className={cn(
+                "flex items-center justify-between px-2 py-1 border-b",
+                darkColors.has(noteData.color) ? "border-white/30" : "border-[var(--color-ink)]"
+            )}>
+                {/* Color picker toggle - palette icon */}
                 <button
                     onClick={() => setShowColorPicker(!showColorPicker)}
-                    className="flex items-center gap-1 px-1.5 py-0.5 border border-[var(--color-ink)] hover:bg-[var(--color-ink)]/10 transition-colors duration-100"
+                    className={cn(
+                        "flex items-center gap-1.5 px-1.5 py-1 rounded-sm transition-colors duration-100",
+                        darkColors.has(noteData.color)
+                            ? "hover:bg-white/20 text-white"
+                            : "hover:bg-[var(--color-ink)]/10 text-[var(--color-ink)]"
+                    )}
                     aria-label="Change note color"
                     title="Change color"
                 >
-                    <span
-                        className="w-3 h-3 border border-[var(--color-ink)]"
-                        style={{ backgroundColor: getPopColorValue(noteData.color) }}
-                    />
-                    <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" className="opacity-60">
-                        <path d="M13.354 3.146a.5.5 0 010 .708l-7 7a.5.5 0 01-.354.146H4a.5.5 0 01-.5-.5v-2a.5.5 0 01.146-.354l7-7a.5.5 0 01.708 0l2 2zM10.5 4.707L5.5 9.707V10.5h.793l5-5L10.5 4.707z" />
+                    {/* Paint palette icon */}
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="13.5" cy="6.5" r="0.5" fill="currentColor" />
+                        <circle cx="17.5" cy="10.5" r="0.5" fill="currentColor" />
+                        <circle cx="8.5" cy="7.5" r="0.5" fill="currentColor" />
+                        <circle cx="6.5" cy="12.5" r="0.5" fill="currentColor" />
+                        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.555C21.965 6.012 17.461 2 12 2z" />
+                    </svg>
+                    {/* Dropdown chevron */}
+                    <svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="opacity-60">
+                        <path d="M3 5L6 8L9 5" />
                     </svg>
                 </button>
 
                 {/* Delete button */}
                 <button
                     onClick={handleDelete}
-                    className="w-5 h-5 flex items-center justify-center text-[var(--color-ink)] hover:bg-[var(--color-ink)]/10 transition-colors duration-100"
+                    className={cn(
+                        "w-5 h-5 flex items-center justify-center transition-colors duration-100",
+                        darkColors.has(noteData.color)
+                            ? "text-white hover:bg-white/20"
+                            : "text-[var(--color-ink)] hover:bg-[var(--color-ink)]/10"
+                    )}
                     aria-label="Delete note"
                 >
                     <svg
@@ -161,8 +187,11 @@ const NanoNote = memo(function NanoNote({ id, data, selected }: NodeProps) {
                     placeholder="Type here..."
                     className={cn(
                         "w-full min-h-[60px] resize-none bg-transparent",
-                        "font-[var(--font-ui)] text-[var(--color-ink)] text-sm",
-                        "placeholder:text-[var(--color-ink)]/50",
+                        "font-[var(--font-ui)] text-sm leading-relaxed",
+                        getTextColorClass(noteData.color),
+                        darkColors.has(noteData.color)
+                            ? "placeholder:text-white/60"
+                            : "placeholder:text-[var(--color-ink)]/50",
                         "focus:outline-none",
                         "cursor-text"
                     )}
