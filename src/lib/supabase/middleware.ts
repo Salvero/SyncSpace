@@ -6,9 +6,18 @@ export async function updateSession(request: NextRequest) {
         request,
     });
 
+    // Check if Supabase env vars are available
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    // If Supabase is not configured, skip session update
+    if (!supabaseUrl || !supabaseAnonKey) {
+        return supabaseResponse;
+    }
+
     const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        supabaseUrl,
+        supabaseAnonKey,
         {
             cookies: {
                 getAll() {
@@ -29,8 +38,12 @@ export async function updateSession(request: NextRequest) {
         }
     );
 
-    // Refresh session if expired
-    await supabase.auth.getUser();
+    try {
+        // Refresh session if expired
+        await supabase.auth.getUser();
+    } catch {
+        // Ignore auth errors in middleware - let the page handle them
+    }
 
     return supabaseResponse;
 }

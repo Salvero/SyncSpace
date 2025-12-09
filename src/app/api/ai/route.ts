@@ -1,10 +1,39 @@
 import { google } from "@ai-sdk/google";
 import { generateText } from "ai";
+import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
 
 // Allow responses up to 30 seconds
 export const maxDuration = 30;
 
+// Rate limit: 10 requests per minute per IP
+const RATE_LIMIT_CONFIG = {
+    maxRequests: 10,
+    windowMs: 60 * 1000, // 1 minute
+};
+
 export async function POST(req: Request) {
+    // Check rate limit first
+    const clientIP = getClientIP(req);
+    const rateLimit = checkRateLimit(`ai:${clientIP}`, RATE_LIMIT_CONFIG);
+
+    if (!rateLimit.success) {
+        return new Response(
+            JSON.stringify({
+                error: "Too many requests. Please try again later.",
+                retryAfter: rateLimit.resetIn,
+            }),
+            {
+                status: 429,
+                headers: {
+                    "Content-Type": "application/json",
+                    "Retry-After": String(rateLimit.resetIn),
+                    "X-RateLimit-Remaining": "0",
+                    "X-RateLimit-Reset": String(rateLimit.resetIn),
+                },
+            }
+        );
+    }
+
     // Validate API key is configured
     if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
         console.error("GOOGLE_GENERATIVE_AI_API_KEY is not set");
@@ -57,7 +86,11 @@ Only output the JSON array, nothing else.`;
         }
 
         return new Response(result.text, {
-            headers: { "Content-Type": "text/plain" },
+            headers: {
+                "Content-Type": "text/plain",
+                "X-RateLimit-Remaining": String(rateLimit.remaining),
+                "X-RateLimit-Reset": String(rateLimit.resetIn),
+            },
         });
     } catch (error) {
         console.error("AI generation error:", error);
