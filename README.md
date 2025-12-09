@@ -1,36 +1,158 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div align="center">
 
-## Getting Started
+# ✨ SyncSpace
 
-First, run the development server:
+**Real-time Collaborative Canvas for Rapid Brainstorming**
+
+*Keyboard-first. No friction. AI-powered.*
+
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-blue?logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Liveblocks](https://img.shields.io/badge/Liveblocks-Realtime-purple)](https://liveblocks.io/)
+[![Supabase](https://img.shields.io/badge/Supabase-Auth-green?logo=supabase)](https://supabase.com/)
+
+[Live Demo](https://syncspace-app.vercel.app) · [Report Bug](https://github.com/Salvero/SyncSpace/issues)
+
+</div>
+
+---
+
+## 📸 Screenshots
+
+### Homepage
+![SyncSpace Homepage](./public/screenshots/SyncSpace-2.png)
+
+### Collaborative Canvas
+![SyncSpace Canvas](./public/screenshots/SyncSpace-board-3.png)
+
+---
+
+## 🚀 Features
+
+| Feature | Description |
+|---------|-------------|
+| 🎨 **Infinite Canvas** | Zoom, pan, and organize ideas freely on an unlimited workspace |
+| ⚡ **Real-time Sync** | Collaborate with teammates instantly via Liveblocks |
+| 🤖 **AI Teammate** | Generate related ideas with Gemini AI (press `M` for magic!) |
+| 🎯 **Keyboard-first** | Speed-optimized shortcuts for power users |
+| 🔗 **Smart Connections** | Link notes with smooth bezier curves |
+| 👥 **Live Cursors** | See collaborators' cursors in real-time |
+| ↩️ **Undo/Redo** | Full history support with `Ctrl+Z` / `Ctrl+Shift+Z` |
+| 📋 **Note Templates** | Quick-start with Idea, Question, or Task templates |
+| 📱 **Mobile Responsive** | Works on desktop, tablet, and mobile |
+| 🔒 **Secure** | Row Level Security with Supabase |
+
+---
+
+## ⌨️ Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `N` | Create new note |
+| `M` | AI Magic - Generate related ideas |
+| `Delete` / `Backspace` | Delete selected note |
+| `Ctrl + Z` | Undo |
+| `Ctrl + Shift + Z` | Redo |
+| `Ctrl + C` | Copy note |
+| `Ctrl + V` | Paste note |
+
+---
+
+## 🛠️ Tech Stack
+
+- **Framework:** [Next.js 16](https://nextjs.org/) with App Router & Turbopack
+- **UI:** [React 19](https://react.dev/) + [Tailwind CSS 4](https://tailwindcss.com/)
+- **Canvas:** [React Flow](https://reactflow.dev/) for node-based interactions
+- **Real-time:** [Liveblocks](https://liveblocks.io/) + [Yjs](https://yjs.dev/) for CRDT sync
+- **AI:** [Google Gemini](https://ai.google.dev/) via Vercel AI SDK
+- **Auth & DB:** [Supabase](https://supabase.com/) with Row Level Security
+- **State:** [Zustand](https://zustand-demo.pmnd.rs/) for local state management
+- **Deployment:** [Vercel](https://vercel.com/)
+
+---
+
+## 📦 Getting Started
+
+### Prerequisites
+
+- Node.js 20+
+- npm, yarn, pnpm, or bun
+
+### Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/Salvero/SyncSpace.git
+cd SyncSpace/syncspace-app
+
+# Install dependencies
+npm install
+
+# Copy environment variables
+cp .env.example .env.local
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create a `.env.local` file with:
 
-## Learn More
+```env
+# Liveblocks (https://liveblocks.io/dashboard)
+NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY=pk_dev_...
+LIVEBLOCKS_SECRET_KEY=sk_dev_...
 
-To learn more about Next.js, take a look at the following resources:
+# Google Gemini AI (https://aistudio.google.com)
+GOOGLE_GENERATIVE_AI_API_KEY=...
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Supabase (https://supabase.com/dashboard)
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 🚀 Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Deploy to Vercel
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Salvero/SyncSpace)
+
+1. Click the button above or run:
+   ```bash
+   vercel
+   ```
+
+2. Add environment variables in Vercel Dashboard
+
+3. Deploy!
+
+---
+
+## 🔒 Security
+
+- **API Keys:** Protected via `.gitignore` - never committed
+- **Rate Limiting:** AI endpoint limited to 10 requests/minute per IP
+- **Row Level Security:** Supabase tables protected with RLS policies
+- **Auth:** Secure authentication via Supabase
+
+---
+
+## 📄 License
+
+MIT License - feel free to use this project for your own purposes.
+
+---
+
+<div align="center">
+
+**Built with 💛 using Nano Banana Design System**
+
+Made by [Salvero](https://github.com/Salvero)
+
+</div>
