@@ -4,8 +4,6 @@
 
 **Real-time Collaborative Canvas for Rapid Brainstorming**
 
-*Keyboard-first. No friction. AI-powered.*
-
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-blue?logo=react)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org/)
