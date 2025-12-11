@@ -1,0 +1,62 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+node_modules/
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+nul
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# turbopack
+.turbo/
+
+# env files
+.env*
+!.env.example
+
+# vercel
+.vercel/
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# cache
+.cache/
+
+# manifests and build files
+app-path-routes-manifest.json
+BUILD_ID
+build-manifest.json
+export-marker.json
+fallback-build-manifest.json
+images-manifest.json
+next-minimal-server.js.nft.json
+next-server.js.nft.json
+package.json.backup
+prerender-manifest.json
+required-server-files.json
