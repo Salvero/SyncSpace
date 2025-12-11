@@ -24,7 +24,7 @@
 ![SyncSpace Homepage](./public/screenshots/SyncSpace-2.png)
 
 ### Collaborative Canvas
-![SyncSpace Canvas](./public/screenshots/SyncSpace-board-3.png)
+![SyncSpace Canvas](./public/screenshots/SyncSpace-canvas.png)
 
 ---
 
