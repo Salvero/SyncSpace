@@ -84,11 +84,6 @@ export default function Home() {
           <kbd className="px-2 py-1 bg-[var(--color-ink)]/10 border border-[var(--color-ink)]/20 ml-2">M</kbd> for AI magic
         </p>
       </div>
-
-      {/* Footer */}
-      <footer className="absolute bottom-6 text-sm text-[var(--color-ink)]/30">
-        Built with Nano Banana Design System
-      </footer>
     </main>
   );
 }
