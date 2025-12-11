@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -23,12 +24,28 @@
 # misc
 .DS_Store
 *.pem
+nul
 
 # debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+
+# next.js cache and metadata (CRITICAL)
+.next/cache
+.next/server/chunks
+.next/trace
+.next/static
+
+# turbopack (Next.js 14+ specific)
+.turbo/
+turbo.json
+
+# IDE and Editor Cache (Avoids committing large metadata files)
+/.vscode/
+.next/
+.claude/
 
 # env files (can opt-in for committing if needed)
 .env*
@@ -40,4 +57,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
+# syncspace-app specific
+syncspace-app/node_modules/
+syncspace-app/.next/
+syncspace-app/.turbo/
