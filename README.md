@@ -117,7 +117,6 @@ Open [http://localhost:3000](http://localhost:3000) to see the app.
 
 ## 🔒 Security
 
-- **API Keys:** Protected via `.gitignore` - never committed
 - **Rate Limiting:** AI endpoint limited to 10 requests/minute per IP
 - **Row Level Security:** Supabase tables protected with RLS policies
 - **Auth:** Secure authentication via Supabase
