@@ -96,23 +96,6 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-### Environment Variables
-
-Create a `.env.local` file with:
-
-```env
-# Liveblocks (https://liveblocks.io/dashboard)
-NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY=pk_dev_...
-LIVEBLOCKS_SECRET_KEY=sk_dev_...
-
-# Google Gemini AI (https://aistudio.google.com)
-GOOGLE_GENERATIVE_AI_API_KEY=...
-
-# Supabase (https://supabase.com/dashboard)
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-```
-
 ---
 
 ## 🚀 Deployment
