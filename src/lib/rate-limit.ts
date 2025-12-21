@@ -10,7 +10,37 @@ interface RateLimitEntry {
     resetTime: number;
 }
 
+// Daily limit tracking
+interface DailyLimitEntry {
+    count: number;
+    resetDate: string; // YYYY-MM-DD format
+}
+
+// Configuration for daily limits
+const DAILY_CONFIG = {
+    maxRequestsPerUserPerDay: 20, // Max AI calls per user per day
+    maxUniqueUsersPerDay: 4,      // Max unique users who can use AI per day
+};
+
 const rateLimitMap = new Map<string, RateLimitEntry>();
+const dailyUserLimitMap = new Map<string, DailyLimitEntry>(); // Track daily usage per user
+const dailyUniqueUsers = new Set<string>(); // Track unique users today
+let dailyResetDate = new Date().toISOString().split('T')[0]; // Current date
+
+/**
+ * Get today's date string and reset daily counters if it's a new day
+ */
+function checkDailyReset(): string {
+    const today = new Date().toISOString().split('T')[0];
+    if (today !== dailyResetDate) {
+        // It's a new day - reset all daily limits
+        dailyUserLimitMap.clear();
+        dailyUniqueUsers.clear();
+        dailyResetDate = today;
+        console.log(`[Rate Limit] Daily reset performed for ${today}`);
+    }
+    return today;
+}
 
 // Clean up old entries periodically (every 5 minutes)
 setInterval(() => {
@@ -20,6 +50,8 @@ setInterval(() => {
             rateLimitMap.delete(key);
         }
     }
+    // Also check for daily reset
+    checkDailyReset();
 }, 5 * 60 * 1000);
 
 interface RateLimitConfig {
@@ -94,4 +126,86 @@ export function getClientIP(request: Request): string {
 
     // Fallback for local development
     return "127.0.0.1";
+}
+
+export interface DailyLimitResult {
+    success: boolean;
+    reason?: 'user_daily_limit' | 'global_user_limit';
+    userRemaining: number;
+    uniqueUsersToday: number;
+    maxUniqueUsers: number;
+}
+
+/**
+ * Check daily limits for AI usage
+ * @param identifier - Unique identifier (usually IP address)
+ * @returns Result with success status and limit information
+ */
+export function checkDailyLimit(identifier: string): DailyLimitResult {
+    checkDailyReset(); // Ensure we're on the right day
+
+    const isExistingUser = dailyUniqueUsers.has(identifier);
+    const userEntry = dailyUserLimitMap.get(identifier);
+
+    // Check if this is a new user and we've hit the global limit
+    if (!isExistingUser && dailyUniqueUsers.size >= DAILY_CONFIG.maxUniqueUsersPerDay) {
+        console.log(`[Rate Limit] Global daily user limit reached (${dailyUniqueUsers.size}/${DAILY_CONFIG.maxUniqueUsersPerDay})`);
+        return {
+            success: false,
+            reason: 'global_user_limit',
+            userRemaining: 0,
+            uniqueUsersToday: dailyUniqueUsers.size,
+            maxUniqueUsers: DAILY_CONFIG.maxUniqueUsersPerDay,
+        };
+    }
+
+    // Check if existing user has hit their daily limit
+    if (userEntry && userEntry.count >= DAILY_CONFIG.maxRequestsPerUserPerDay) {
+        console.log(`[Rate Limit] User ${identifier} hit daily limit (${userEntry.count}/${DAILY_CONFIG.maxRequestsPerUserPerDay})`);
+        return {
+            success: false,
+            reason: 'user_daily_limit',
+            userRemaining: 0,
+            uniqueUsersToday: dailyUniqueUsers.size,
+            maxUniqueUsers: DAILY_CONFIG.maxUniqueUsersPerDay,
+        };
+    }
+
+    // Add user to daily set and increment their count
+    dailyUniqueUsers.add(identifier);
+
+    if (userEntry) {
+        userEntry.count++;
+    } else {
+        dailyUserLimitMap.set(identifier, {
+            count: 1,
+            resetDate: dailyResetDate,
+        });
+    }
+
+    const currentCount = dailyUserLimitMap.get(identifier)!.count;
+    console.log(`[Rate Limit] User ${identifier}: ${currentCount}/${DAILY_CONFIG.maxRequestsPerUserPerDay} daily requests, ${dailyUniqueUsers.size}/${DAILY_CONFIG.maxUniqueUsersPerDay} unique users today`);
+
+    return {
+        success: true,
+        userRemaining: DAILY_CONFIG.maxRequestsPerUserPerDay - currentCount,
+        uniqueUsersToday: dailyUniqueUsers.size,
+        maxUniqueUsers: DAILY_CONFIG.maxUniqueUsersPerDay,
+    };
+}
+
+/**
+ * Get current daily limit status (for debugging/monitoring)
+ */
+export function getDailyLimitStatus(): {
+    uniqueUsersToday: number;
+    maxUniqueUsers: number;
+    resetDate: string;
+} {
+    checkDailyReset();
+    return {
+        uniqueUsersToday: dailyUniqueUsers.size,
+        maxUniqueUsers: DAILY_CONFIG.maxUniqueUsersPerDay,
+        resetDate: dailyResetDate,
+    };
 }

@@ -1,18 +1,18 @@
 import { google } from "@ai-sdk/google";
 import { generateText } from "ai";
-import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
+import { checkRateLimit, checkDailyLimit, getClientIP } from "@/lib/rate-limit";
 
 // Allow responses up to 30 seconds
 export const maxDuration = 30;
 
-// Rate limit: 10 requests per minute per IP
+// Rate limit: 5 requests per minute per IP (reduced from 10)
 const RATE_LIMIT_CONFIG = {
-    maxRequests: 10,
+    maxRequests: 5,
     windowMs: 60 * 1000, // 1 minute
 };
 
 export async function POST(req: Request) {
-    // Check rate limit first
+    // Check rate limit first (per-minute limit)
     const clientIP = getClientIP(req);
     const rateLimit = checkRateLimit(`ai:${clientIP}`, RATE_LIMIT_CONFIG);
 
@@ -29,6 +29,30 @@ export async function POST(req: Request) {
                     "Retry-After": String(rateLimit.resetIn),
                     "X-RateLimit-Remaining": "0",
                     "X-RateLimit-Reset": String(rateLimit.resetIn),
+                },
+            }
+        );
+    }
+
+    // Check daily limits (per-user daily limit + global unique user cap)
+    const dailyLimit = checkDailyLimit(clientIP);
+
+    if (!dailyLimit.success) {
+        const errorMessage = dailyLimit.reason === 'global_user_limit'
+            ? "Daily user limit reached. AI feature is temporarily unavailable. Please try again tomorrow."
+            : "You've reached your daily AI usage limit. Please try again tomorrow.";
+
+        return new Response(
+            JSON.stringify({
+                error: errorMessage,
+                reason: dailyLimit.reason,
+                uniqueUsersToday: dailyLimit.uniqueUsersToday,
+                maxUniqueUsers: dailyLimit.maxUniqueUsers,
+            }),
+            {
+                status: 429,
+                headers: {
+                    "Content-Type": "application/json",
                 },
             }
         );
